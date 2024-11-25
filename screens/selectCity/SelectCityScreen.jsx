@@ -17,7 +17,7 @@ const SelectCityScreen = () => {
   );
 
   const renderCityItem = ({ item, index }) => (
-    <View style={styles.row}>
+    <View style={styles.row}> 
       {/* Sıra numarası */}
       <Text style={styles.number}>{index + 1}.</Text>
       {/* Şehir ismi */}
