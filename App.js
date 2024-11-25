@@ -1,20 +1,50 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import HomeScreen from './screens/HomeScreen';
+import TutorialScreen from './screens/TutorialScreen';
+import SelectCityScreen from './screens/selectCity/SelectCityScreen';
 
-export default function App() {
+
+const Stack = createNativeStackNavigator();
+
+const App = () => {
+  // const [isTutorialShown, setIsTutorialShown] = useState(false);
+
+  // useEffect(() => {
+  //   const checkTutorialStatus = async () => {
+  //     const tutorialStatus = await AsyncStorage.getItem('tutorialShown');
+  //     if (tutorialStatus === 'true') {
+  //       setIsTutorialShown(true);
+  //     }
+  //   };
+  //   checkTutorialStatus();
+  // }, []);
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator>
+        {/* {!isTutorialShown && ( */}
+          <Stack.Screen
+            name="Tutorial"
+            component={TutorialScreen}
+            options={{ headerShown: false }}
+          />
+        {/* )} */}
+        <Stack.Screen
+        options={{ headerShown: false }}
+          name="Home"
+          component={HomeScreen}
+        />
+        <Stack.Screen
+        options={{ headerShown: true }}
+          name="SelectCityScreen"
+          component={SelectCityScreen}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default App;
