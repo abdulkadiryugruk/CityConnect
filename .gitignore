@@ -72,3 +72,9 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Android build artifacts
+android/app/build/
+android/.gradle/
+*.apk
+*.so
