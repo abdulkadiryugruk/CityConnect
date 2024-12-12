@@ -1,60 +1,150 @@
-import {StyleSheet, Text, View, FlatList} from 'react-native';
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, {useState, useEffect} from 'react';
-import RNFS from 'react-native-fs';
 import CustomTextInput from '../components/CustomTextInput';
+import {View, Text, TouchableOpacity, FlatList, StyleSheet} from 'react-native';
+import RNFS from 'react-native-fs'; // Dosya işlemleri için
 
 const EditScreen = () => {
-  const [peoples, setPeoples] = useState([]);
-  const [search, setSearch] = useState('');
+  const [cities, setCities] = useState([]);
+  const [expandedCities, setExpandedCities] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const filePath = `${RNFS.DocumentDirectoryPath}/UserCities.json`;
 
+  // Uygulama başladığında dosyayı yükle veya oluştur
   useEffect(() => {
-    const loadPeopleFromFile = async () => {
+    const initializeData = async () => {
       try {
-        const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
         const fileExists = await RNFS.exists(filePath);
 
         if (fileExists) {
-          // TODO burada UserCities.json dosyasi degil rehberdeki kisiler yazdirilacak
-          const fileContent = await RNFS.readFile(filePath, 'utf8');
-          const jsonData = JSON.parse(fileContent);
-          const allPeople = jsonData.cities.flatMap(city => city.people || []);
-          setPeoples(allPeople);
+          const fileData = await RNFS.readFile(filePath, 'utf8');
+          const parsedData = JSON.parse(fileData);
+          setCities(parsedData.cities || []);
+
+          // Varsayılan olarak tüm şehirleri açık hale getir
+          const initialExpandedState = {};
+          parsedData.cities.forEach(city => {
+            initialExpandedState[city.name] = true;
+          });
+          setExpandedCities(initialExpandedState);
         } else {
-          console.log('UserCities.json bulunamadı!');
+          const defaultData = {cities: []};
+          await RNFS.writeFile(filePath, JSON.stringify(defaultData), 'utf8');
+          setCities(defaultData.cities);
         }
       } catch (error) {
-        console.error('Kişiler yüklenirken hata oluştu:', error);
+        console.error('Dosya başlatma hatası:', error);
       }
     };
 
-    loadPeopleFromFile();
+    initializeData();
   }, []);
 
-  const filteredPeoples = peoples.filter(people =>
-    people.fullName.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filteredCities = cities
+    .map(city => {
+      const matchingPeople = city.people.filter(
+        person =>
+          person.fullName &&
+          person.fullName
+            .toLowerCase()
+            .includes(searchQuery?.toLowerCase() || ''),
+      );
+
+      if (
+        (city.name &&
+          city.name.toLowerCase().includes(searchQuery?.toLowerCase() || '')) ||
+        matchingPeople.length > 0
+      ) {
+        return {
+          ...city,
+          people: matchingPeople,
+        };
+      }
+
+      return null;
+    })
+    .filter(city => city !== null);
+  // null değerleri filtrele
+
+  const toggleCity = cityName => {
+    setExpandedCities(prev => ({
+      ...prev,
+      [cityName]: !prev[cityName],
+    }));
+  };
+
+  const handleRemovePerson = (cityName, person) => {
+    const updatedCities = cities.map(city => {
+      if (city.name === cityName) {
+        return {
+          ...city,
+          people: city.people.filter(p => p.fullName !== person.fullName),
+        };
+      }
+      return city;
+    });
+
+    saveUpdatedCitiesToFile(updatedCities);
+    setCities(updatedCities);
+  };
+
+  const saveUpdatedCitiesToFile = async updatedCities => {
+    try {
+      const jsonData = JSON.stringify({cities: updatedCities}, null, 2);
+      await RNFS.writeFile(filePath, jsonData, 'utf8');
+    } catch (error) {
+      console.error('JSON dosyasına yazılamadı:', error);
+    }
+  };
+
+  const CityRow = React.memo(({city}) => {
+    return (
+      <View style={styles.cityContainer}>
+        <TouchableOpacity onPress={() => toggleCity(city.name)}>
+          <Text style={styles.cityName}>{city.name}</Text>
+        </TouchableOpacity>
+        {expandedCities[city.name] && (
+          <FlatList
+            data={city.people}
+            keyExtractor={(person, index) => `${city.name}-${index}`}
+            renderItem={({item}) => (
+              <PersonRow
+                person={item}
+                onRemove={() => handleRemovePerson(city.name, item)}
+              />
+            )}
+          />
+        )}
+      </View>
+    );
+  });
+
+  const PersonRow = React.memo(({person, onRemove}) => {
+    return (
+      <View style={styles.personRow}>
+        <Text style={styles.personText}>{person.fullName}</Text>
+        <TouchableOpacity style={styles.removeButton} onPress={onRemove}>
+          <Text style={styles.removeButtonText}>Çıkar</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  });
 
   return (
     <View style={styles.container}>
       <CustomTextInput
-        placeholder={'Kişi Ara'}
-        value={search}
-        onChangeText={text => setSearch(text)}
+        style={styles.searchBar}
+        placeholder={'Şehir veya kisi Ara...'}
+        value={searchQuery}
+        onChangeText={setSearchQuery}
       />
-      {filteredPeoples.length === 0 ? (
-        <Text style={styles.noResultText}>Kişi bulunamadı!</Text>
-      ) : (
-        <FlatList
-          style={styles.listStyle}
-          data={filteredPeoples}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({item}) => (
-            <View style={styles.row}>
-              <Text style={styles.cityText}>{item.fullName}</Text>
-            </View>
-          )}
-        />
-      )}
+      <FlatList
+        data={filteredCities}
+        keyExtractor={(item, index) => `${item.name}-${index}`}
+        renderItem={({item}) => <CityRow city={item} />}
+        initialNumToRender={10}
+        windowSize={5}
+      />
     </View>
   );
 };
@@ -65,28 +155,49 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
+    padding: 10,
+  },
+  searchBar: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 8,
     paddingHorizontal: 10,
+    marginBottom: 10,
   },
-  listStyle: {
-    width: '100%',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 5,
-    padding: 15,
-    backgroundColor: '#f9f9f9',
+  cityContainer: {
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#ccc',
     borderRadius: 10,
+    padding: 10,
+    backgroundColor: '#f9f9f9',
   },
-  cityText: {
+  cityName: {
     fontSize: 18,
-    fontWeight: '600',
-    color: 'black',
+    fontWeight: 'bold',
   },
-  noResultText: {
+  personRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    backgroundColor: '#e9ecef',
+    borderRadius: 8,
+    marginVertical: 2,
+  },
+  personText: {
     fontSize: 16,
-    color: 'gray',
-    marginTop: 10,
-    textAlign: 'center',
+  },
+  removeButton: {
+    backgroundColor: 'tomato',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  removeButtonText: {
+    color: 'white',
+    fontSize: 14,
   },
 });

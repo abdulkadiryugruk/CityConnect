@@ -7,7 +7,8 @@ import TutorialScreen from './src/screens/TutorialScreen';
 import SelectCityScreen from './src/screens/selectCity/SelectCityScreen';
 import CityandContactsScreen from './src/screens/selectCity/CityandContactsScreen';
 import EditScreen from './src/screens/EditScreen';
-
+import SelectContactScreen from './src/screens/selectPeople/SelectContactScreen';
+import ContactAndCityScreen from './src/screens/selectPeople/ContactAndCityScreen';
 const Stack = createNativeStackNavigator();
 
 const App = () => {
@@ -47,6 +48,16 @@ const App = () => {
           options={{headerShown: true}}
           name="CityandContactsScreen"
           component={CityandContactsScreen}
+        />
+        <Stack.Screen
+          options={{headerShown: true}}
+          name="SelectContactScreen"
+          component={SelectContactScreen}
+        />
+        <Stack.Screen
+          options={{headerShown: true}}
+          name="ContactAndCityScreen"
+          component={ContactAndCityScreen}
         />
         <Stack.Screen
           options={{headerShown: true}}

@@ -5,14 +5,13 @@ import CustomTextInput from '../../components/CustomTextInput';
 import Contacts from 'react-native-contacts'; // Rehberdeki kişileri almak için
 import { useRoute, useNavigation } from '@react-navigation/native'; // Parametre almak için
 
-const CityandContactsScreen = () => {
+const SelectContactScreen = () => {
   const route = useRoute(); // Ekrana gönderilen parametreyi al
   const navigation = useNavigation();
   const [peoples, setPeoples] = useState([]); // Rehberdeki kişiler
   const [unmatchedPeoples, setUnmatchedPeoples] = useState([]); // Eşleşmeyen kişiler
   const [search, setSearch] = useState(''); // Arama metni
   const [citiesData, setCitiesData] = useState([]); // UserCities.json verisi
-  const { cityName, cityId } = route.params; // Parametreleri destructuring ile alıyoruz
 
   useEffect(() => {
     const loadPeopleFromFile = async () => {
@@ -51,55 +50,29 @@ const CityandContactsScreen = () => {
 
   useEffect(() => {
     // Rehberdeki kişilerle UserCities.json'daki kişileri karşılaştırarak eşleşmeyenleri ayıklıyoruz
-    const unmatched = peoples.filter(people =>
+    const unmatched = peoples.filter(person =>
       !citiesData.some(city =>
-        city.people?.some(p => p.fullName === people.displayName),
+        city.people?.some(p => p.fullName === person.displayName),
       ),
     );
     setUnmatchedPeoples(unmatched);
   }, [peoples, citiesData]); // peoples ve citiesData değiştiğinde tekrar çalışacak
 
   const filteredUnmatchedPeoples = unmatchedPeoples.filter(
-    people =>
-      people.displayName &&
-      people.displayName.toLowerCase().includes(search?.toLowerCase() || '')
+    person =>
+      person.displayName &&
+      person.displayName.toLowerCase().includes(search?.toLowerCase() || '')
   );
-
-  const handleAddToCity = async (people) => {
-    try {
-      // Şehirler listesine ekleme işlemi
-      const updatedCitiesData = citiesData.map(city => {
-        if (city.name === cityName) {
-          // Seçilen şehirdeki kişilere ekleme
-          return {
-            ...city,
-            people: [...(city.people || []), { fullName: people.displayName }]
-          };
-        }
-        return city;
-      });
-
-      // Güncellenmiş şehirler verisini UserCities.json dosyasına kaydetme
-      const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
-      await RNFS.writeFile(filePath, JSON.stringify({ cities: updatedCitiesData }), 'utf8');
-  
-      // Rehberdeki kişiyi eşleşen kişilerden çıkarma
-      setUnmatchedPeoples(unmatchedPeoples.filter(p => p.displayName !== people.displayName));
-  
-      // Güncellenmiş şehirler verisini state'e kaydetme
-      setCitiesData(updatedCitiesData);
-  
-      console.log(`Kişi ${people.displayName} ${cityName} şehrine eklendi!`);
-    } catch (error) {
-      console.error('Şehre eklerken hata oluştu:', error);
-    }
+  const removeMatchedPerson = (personName) => {
+    setUnmatchedPeoples((prev) =>
+      prev.filter((person) => person.displayName !== personName)
+    );
   };
   
-  
+
 
   return (
     <View style={styles.container}>
-      <Text style={styles.cityTitle}>{cityName} Şehri</Text>
       <CustomTextInput
         placeholder={'Eşleşmeyen Kişi Ara'}
         value={search}
@@ -114,13 +87,13 @@ const CityandContactsScreen = () => {
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item }) => (
             <View style={styles.row}>
+				<TouchableOpacity
+				style= {styles.peopleItem}
+				onPress={()=>navigation.navigate(
+				'ContactAndCityScreen',	{peopleName: item.displayName , removeMatchedPerson})}
+				>
               <Text style={styles.cityText}>{item.displayName}</Text>
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={() => handleAddToCity(item)} // Kişi eklenince listeden kaybolacak
-              >
-                <Text style={styles.addButtonText}>Şehre Ekle</Text>
-              </TouchableOpacity>
+			  </TouchableOpacity>
             </View>
           )}
         />
@@ -129,7 +102,7 @@ const CityandContactsScreen = () => {
   );
 };
 
-export default CityandContactsScreen;
+export default SelectContactScreen;
 
 const styles = StyleSheet.create({
   container: {

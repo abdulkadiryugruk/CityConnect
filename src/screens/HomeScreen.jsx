@@ -26,8 +26,11 @@ const saveUpdatedCitiesToFile = (updatedCities, fileName) => {
 // Rehber kişilerini şehirlerle eşleştirme fonksiyonu
 const assignContactsToCities = contacts => {
   const updatedCities = citiesData.cities.map(city => {
-    const matchedContacts = contacts.filter(contact =>
-      contact.fullName.toLowerCase().includes(city.name.toLowerCase()),
+    const matchedContacts = contacts.filter(
+      contact =>
+        contact.fullName &&
+        city.name &&
+        contact.fullName.toLowerCase().includes(city.name.toLowerCase())
     );
     return {
       ...city,
@@ -38,7 +41,8 @@ const assignContactsToCities = contacts => {
   return updatedCities;
 };
 
-// Rehberi tara butonunun işlevi
+
+// Rehber tarama işlemi
 const handleScanContacts = async () => {
   try {
     const contacts = await requestContactPermission();
@@ -55,14 +59,44 @@ const handleScanContacts = async () => {
   }
 };
 
+// Önbelleği temizleme fonksiyonu
+const clearCache = async () => {
+  try {
+    const filePath = `${RNFS.DocumentDirectoryPath}/UserCities.json`;
+
+    // Dosya mevcut mu kontrol et
+    const fileExists = await RNFS.exists(filePath);
+
+    if (fileExists) {
+      // Dosyayı sil
+      await RNFS.unlink(filePath);
+      Alert.alert('Başarılı', 'Önbellek temizlendi.');
+    } else {
+      Alert.alert('Bilgi', 'Önbellek dosyası bulunamadı.');
+    }
+  } catch (error) {
+    console.error('Önbellek temizlenirken hata oluştu:', error);
+    Alert.alert('Hata', 'Önbellek temizlenirken bir hata oluştu.');
+  }
+};
+
 const HomeScreen = ({navigation}) => {
   return (
     <View style={styles.container}>
+      {/* Önbelleği Temizle butonu */}
+      <Button
+        title="Önbelleği Temizle"
+        onPress={clearCache} // Butona tıklanınca clearCache fonksiyonu çalışacak
+      />
+
+      {/* Rehberi Tara butonu */}
       <CustomButton
         customStyle={{marginVertical: 30}}
         buttonText="Rehberi Tara"
         pressed={handleScanContacts}
       />
+
+      {/* Manuel Ekleme */}
       <View style={styles.manuelAddContainer}>
         <View style={styles.manuelAddLabel}>
           <Text style={styles.labelText}>Manuel Ekleme</Text>
@@ -77,13 +111,19 @@ const HomeScreen = ({navigation}) => {
           <CustomButton
             customStyle={{height: 40, marginBottom: 20, marginVertical: 0}}
             textStyle={{fontSize: 20}}
-            buttonText="Kisi Seç"
+            buttonText="Kişi Seç"
+            pressed={() => navigation.navigate('SelectContactScreen')}
+
           />
         </View>
       </View>
-      <CustomButton buttonText="Düzenle"
-      pressed={() => navigation.navigate('EditScreen')}
+
+      {/* Düzenle butonu */}
+      <CustomButton
+        buttonText="Düzenle"
+        pressed={() => navigation.navigate('EditScreen')}
       />
+
       <Button
         title="Go to Tutorial"
         onPress={() => navigation.navigate('Tutorial')}

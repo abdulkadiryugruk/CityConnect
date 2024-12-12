@@ -2,11 +2,13 @@ import {StyleSheet, Text, View, FlatList, TouchableOpacity} from 'react-native';
 import React, {useState, useEffect} from 'react';
 import CustomTextInput from '../../components/CustomTextInput';
 import RNFS from 'react-native-fs'; // Dosya sistemi için
-import { useNavigation } from '@react-navigation/native'; // useNavigation hook'u eklendi
+import {useNavigation, useRoute} from '@react-navigation/native'; // useNavigation hook'u eklendi
 
-const SelectCityScreen = () => {
+const ContactAndCityScreen = () => {
+  const route = useRoute();
+  const {peopleName, removeMatchedPerson} = route.params;
   const [cities, setCities] = useState([]); // UserCities.json'dan alınacak şehirler
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(''); // Arama metni
   const navigation = useNavigation(); // navigation nesnesini hook ile alıyoruz
 
   useEffect(() => {
@@ -36,25 +38,62 @@ const SelectCityScreen = () => {
       city.name.toLowerCase().includes(search?.toLowerCase() || '')
   );
 
+  const handleAddToPeople = async (city) => {
+    try {
+      // Seçilen kişiyi şehir objesine ekle
+      const updatedCities = cities.map((item) => {
+        if (item.name === city.name) {
+          return {
+            ...item,
+            people: [...item.people, { fullName: peopleName }],
+          };
+        }
+        return item;
+      });
 
-  const renderCityItem = ({item, index}) => (
+      // JSON dosyasını güncelle
+      const updatedData = { cities: updatedCities };
+      const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
+      await RNFS.writeFile(filePath, JSON.stringify(updatedData), 'utf8');
+
+      // Durumu güncelle
+      setCities(updatedCities);
+
+      // Kişiyi eşleşmeyen kişiler listesinden çıkar
+      removeMatchedPerson(peopleName);
+
+      // Kullanıcıyı bilgilendirme
+      alert(`${peopleName} ${city.name} şehrine eklendi!`);
+      navigation.goBack(); // İşlem sonrası önceki ekrana dön
+    } catch (error) {
+      console.error('Kişi eklenirken hata oluştu:', error);
+    }
+  };
+
+  const renderCityItem = ({ item, index }) => (
     <View style={styles.row}>
       <Text style={styles.number}>{index + 1}.</Text>
-      <TouchableOpacity
-  style={styles.cityItem}
-  onPress={() => navigation.navigate('CityandContactsScreen', { cityName: item.name})}
->
-  <Text style={styles.cityText}>{item.name.toUpperCase()}</Text>
-</TouchableOpacity>
+      <View style={styles.cityContainer}>
+        <Text style={styles.cityText}>{item.name.toUpperCase()}</Text>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => handleAddToPeople(item)} // Kişi eklenince listeden kaybolacak
+        >
+          <Text style={styles.addButtonText}>Şehre Ekle</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
+
   return (
     <View style={styles.container}>
+      <Text style={styles.peopleNameText}>{peopleName} Kişisi</Text>
       <CustomTextInput
         placeholder={'Şehir Ara'}
         value={search}
         onChangeText={text => setSearch(text)}
+        style={styles.searchInput}
       />
 
       {filteredCities.length === 0 ? (
@@ -73,7 +112,7 @@ const SelectCityScreen = () => {
   );
 };
 
-export default SelectCityScreen;
+export default ContactAndCityScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -88,7 +127,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 5,
-    paddingRight: '10%',
+    padding: 15,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    justifyContent: 'space-between',
   },
   number: {
     width: '10%',
@@ -96,18 +138,28 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'gray',
   },
-  cityItem: {
+  cityContainer: {
     flex: 1,
-    padding: 15,
-    backgroundColor: '#2196F3',
-    borderRadius: 10,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   cityText: {
     fontSize: 20,
     fontWeight: '600',
+    color: 'black',
+    textAlign: 'left',
+    flex: 1,
+  },
+  addButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+  },
+  addButtonText: {
     color: 'white',
-    textAlign: 'center',
+    fontWeight: '600',
   },
   noResultText: {
     fontSize: 16,
@@ -116,3 +168,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+

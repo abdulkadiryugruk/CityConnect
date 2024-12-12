@@ -6,6 +6,7 @@ const CustomTextInput = ({placeholder, value, onChangeText}) => {
     <TextInput
       style={styles.input}
       placeholder={placeholder}
+      placeholderTextColor="gray"
       value={value}
       onChangeText={onChangeText}
     />

@@ -66,8 +66,6 @@ const getContacts = () => {
         const names = contacts.map(contact => ({
           fullName: contact.displayName, // Kişinin görüntülenen tam adı
         }));
-
-        //   console.log(names);  TODO Tam isimleri konsola yazdır
         resolve(names); // Tam isimleri döndür
       })
       .catch(error => {
