@@ -70,7 +70,7 @@ def enableProguardInReleaseBuilds = false
  * give correct results when using with locales other than en-US. Note that
  * this variant is about 6MiB larger per architecture than default.
  */
-def jscFlavor = 'org.webkit:android-jsc:+'
+def jscFlavor = 'org.webkit:android-jsc:+' // Ensure this uses AndroidX version
 
 android {
     ndkVersion rootProject.ext.ndkVersion
@@ -116,4 +116,8 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+
+    // Remove legacy support libraries and use AndroidX dependencies
+    // Example: androidx.core
+    implementation 'androidx.core:core:1.9.0' // Ensure this uses AndroidX version
 }

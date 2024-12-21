@@ -1,0 +1,171 @@
+import {StyleSheet, Text, View, FlatList, TouchableOpacity} from 'react-native';
+import React, {useState, useEffect} from 'react';
+import CustomTextInput from '../../components/CustomTextInput';
+import RNFS from 'react-native-fs'; // Dosya sistemi için
+import {useNavigation, useRoute} from '@react-navigation/native'; // useNavigation hook'u eklendi
+
+const ContactAndCityScreen = () => {
+  const route = useRoute();
+  const {peopleName, removeMatchedPerson} = route.params;
+  const [cities, setCities] = useState([]); // UserCities.json'dan alınacak şehirler
+  const [search, setSearch] = useState(''); // Arama metni
+  const navigation = useNavigation(); // navigation nesnesini hook ile alıyoruz
+
+  useEffect(() => {
+    const loadCitiesFromFile = async () => {
+      try {
+        const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
+        const fileExists = await RNFS.exists(filePath);
+
+        if (fileExists) {
+          const fileContent = await RNFS.readFile(filePath, 'utf8');
+          const jsonData = JSON.parse(fileContent);
+          setCities(jsonData.cities); // UserCities.json'daki şehirleri set et
+        } else {
+          console.log('UserCities.json bulunamadı!');
+        }
+      } catch (error) {
+        console.error('Şehirler yüklenirken hata oluştu:', error);
+      }
+    };
+
+    loadCitiesFromFile();
+  }, []);
+
+  const filteredCities = cities.filter(
+    city =>
+      city.name &&
+      city.name.toLowerCase().includes(search?.toLowerCase() || '')
+  );
+
+  const handleAddToPeople = async (city) => {
+    try {
+      // Seçilen kişiyi şehir objesine ekle
+      const updatedCities = cities.map((item) => {
+        if (item.name === city.name) {
+          return {
+            ...item,
+            people: [...item.people, { fullName: peopleName }],
+          };
+        }
+        return item;
+      });
+
+      // JSON dosyasını güncelle
+      const updatedData = { cities: updatedCities };
+      const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
+      await RNFS.writeFile(filePath, JSON.stringify(updatedData), 'utf8');
+
+      // Durumu güncelle
+      setCities(updatedCities);
+
+      // Kişiyi eşleşmeyen kişiler listesinden çıkar
+      removeMatchedPerson(peopleName);
+
+      // Kullanıcıyı bilgilendirme
+      alert(`${peopleName} ${city.name} şehrine eklendi!`);
+      navigation.goBack(); // İşlem sonrası önceki ekrana dön
+    } catch (error) {
+      console.error('Kişi eklenirken hata oluştu:', error);
+    }
+  };
+
+  const renderCityItem = ({ item, index }) => (
+    <View style={styles.row}>
+      <Text style={styles.number}>{index + 1}.</Text>
+      <View style={styles.cityContainer}>
+        <Text style={styles.cityText}>{item.name.toUpperCase()}</Text>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => handleAddToPeople(item)} // Kişi eklenince listeden kaybolacak
+        >
+          <Text style={styles.addButtonText}>Şehre Ekle</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.peopleNameText}>{peopleName} Kişisi</Text>
+      <CustomTextInput
+        placeholder={'Şehir Ara'}
+        value={search}
+        onChangeText={text => setSearch(text)}
+        style={styles.searchInput}
+      />
+
+      {filteredCities.length === 0 ? (
+        <Text style={styles.noResultText}>Şehir bulunamadı!</Text>
+      ) : (
+        <FlatList
+          style={styles.listStyle}
+          data={filteredCities}
+          renderItem={renderCityItem}
+          keyExtractor={item => item.name}
+          initialNumToRender={11}
+          removeClippedSubviews={true}
+        />
+      )}
+    </View>
+  );
+};
+
+export default ContactAndCityScreen;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'white',
+    paddingHorizontal: 10,
+  },
+  listStyle: {
+    width: '100%',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 5,
+    padding: 15,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    justifyContent: 'space-between',
+  },
+  number: {
+    width: '10%',
+    fontSize: 20,
+    fontWeight: '600',
+    color: 'gray',
+  },
+  cityContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  cityText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: 'black',
+    textAlign: 'left',
+    flex: 1,
+  },
+  addButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+  },
+  addButtonText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  noResultText: {
+    fontSize: 16,
+    color: 'gray',
+    marginTop: 10,
+    textAlign: 'center',
+  },
+});
+
