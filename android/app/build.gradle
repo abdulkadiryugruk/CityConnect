@@ -73,15 +73,15 @@ def enableProguardInReleaseBuilds = false
 def jscFlavor = 'org.webkit:android-jsc:+' // Ensure this uses AndroidX version
 
 android {
-    ndkVersion rootProject.ext.ndkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
-    compileSdk rootProject.ext.compileSdkVersion
+    ndkVersion "26.1.10909125" // NDK sürümünüz burada tanımlandı
+    compileSdk 33// Güncel bir build tools sürümü kullanın
+    // Projeye uygun SDK sürümünü belirleyin
 
     namespace "com.denemee"
     defaultConfig {
         applicationId "com.denemee"
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        minSdkVersion 24 // İhtiyacınıza göre ayarlayın
+        targetSdkVersion 33 // Güncel olmasını öneririm
         versionCode 1
         versionName "1.0"
     }
