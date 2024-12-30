@@ -9,6 +9,7 @@ import CityandContactsScreen from './src/screens/selectCity/CityandContactsScree
 import EditScreen from './src/screens/EditScreen';
 import SelectContactScreen from './src/screens/selectPeople/SelectContactScreen';
 import ContactAndCityScreen from './src/screens/selectPeople/ContactAndCityScreen';
+import TutorialBackground from './src/screens/TutorialBackground';
 
 const Stack = createNativeStackNavigator();
 
@@ -71,6 +72,11 @@ const App = () => {
           options={{headerShown: true}}
           name="EditScreen"
           component={EditScreen}
+        />
+        <Stack.Screen
+          options={{headerShown: true}}
+          name="TutorialBackground"
+          component={TutorialBackground}
         />
       </Stack.Navigator>
     </NavigationContainer>

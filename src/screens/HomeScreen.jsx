@@ -1,4 +1,4 @@
-import {Button, StyleSheet, Text, View, Alert} from 'react-native';
+import {Button, StyleSheet, Text, View, Alert, Image} from 'react-native';
 import React, {useState, useCallback} from 'react';
 import CustomButton from '../components/CustomButton';
 import {Dimensions} from 'react-native';
@@ -38,7 +38,7 @@ const FileOperations = {
       console.error('Önbellek temizlenirken hata oluştu:', error);
       throw error;
     }
-  }
+  },
 };
 
 const HomeScreen = ({navigation}) => {
@@ -51,7 +51,7 @@ const HomeScreen = ({navigation}) => {
     setIsScanning(true);
     try {
       const contacts = await requestContactPermission();
-      
+
       if (!contacts) {
         Alert.alert(
           'İzin Gerekli',
@@ -59,15 +59,10 @@ const HomeScreen = ({navigation}) => {
           [
             {
               text: 'Tamam',
-              onPress: () => setIsScanning(false)
-            }
-          ]
+              onPress: () => setIsScanning(false),
+            },
+          ],
         );
-        return;
-      }
-
-      if (contacts.length === 0) {
-        Alert.alert('Bilgi', 'Rehberinizde kayıtlı kişi bulunamadı.');
         return;
       }
 
@@ -78,16 +73,20 @@ const HomeScreen = ({navigation}) => {
           contact =>
             contact.fullName &&
             city.name &&
-            contact.fullName.toLowerCase().includes(city.name.toLowerCase())
+            contact.fullName.toLowerCase().includes(city.name.toLowerCase()),
         ),
       }));
 
       // Dosyaya kaydetme
       const saveSuccess = await FileOperations.saveUpdatedCitiesToFile(
         updatedCities,
-        'UserCities.json'
+        'UserCities.json',
       );
 
+      if (contacts.length === 0) {
+        Alert.alert('Bilgi', 'Rehberinizde kayıtlı kişi bulunamadı.');
+        return;
+      }
       if (saveSuccess) {
         Alert.alert('Başarılı', 'Rehber tarandı ve kişiler eklendi.');
       } else {
@@ -117,51 +116,59 @@ const HomeScreen = ({navigation}) => {
 
   return (
     <View style={styles.container}>
-      <Button
+      {/* kaldirilacak */}
+      {/* <Button
         title="Önbelleği Temizle"
         onPress={handleClearCache}
+      /> */}
+      <Image
+        style={styles.backgroundImg}
+        source={require('../images/HomeBackground.png')}
       />
+      <View style={styles.lacivert}>
+      <View style={styles.containerBox}>
+        <CustomButton
+          customStyle={{marginVertical: 30}}
+          buttonText={isScanning ? 'Taranıyor...' : 'Rehberi Tara'}
+          pressed={handleScanContacts}
+          disabled={isScanning}
+        />
 
-      <CustomButton
-        customStyle={{marginVertical: 30}}
-        buttonText={isScanning ? "Taranıyor..." : "Rehberi Tara"}
-        pressed={handleScanContacts}
-        disabled={isScanning}
-      />
+        <View style={styles.manuelAddContainer}>
+          <View style={styles.manuelAddLabel}>
+            <Text style={styles.labelText}>Manuel Ekleme</Text>
+          </View>
+          <View style={styles.manuelAddContent}>
+            <CustomButton
+              customStyle={{height: 40, marginVertical: 25}}
+              textStyle={{fontSize: 20}}
+              buttonText="Şehir Seç"
+              pressed={() => navigation.navigate('SelectCityScreen')}
+            />
+            <CustomButton
+              customStyle={{height: 40, marginBottom: 20, marginVertical: 0}}
+              textStyle={{fontSize: 20}}
+              buttonText="Kişi Seç"
+              pressed={() => navigation.navigate('SelectContactScreen')}
+            />
+          </View>
+        </View>
 
-      <View style={styles.manuelAddContainer}>
-        <View style={styles.manuelAddLabel}>
-          <Text style={styles.labelText}>Manuel Ekleme</Text>
-        </View>
-        <View style={styles.manuelAddContent}>
-          <CustomButton
-            customStyle={{height: 40, marginVertical: 25}}
-            textStyle={{fontSize: 20}}
-            buttonText="Şehir Seç"
-            pressed={() => navigation.navigate('SelectCityScreen')}
-          />
-          <CustomButton
-            customStyle={{height: 40, marginBottom: 20, marginVertical: 0}}
-            textStyle={{fontSize: 20}}
-            buttonText="Kişi Seç"
-            pressed={() => navigation.navigate('SelectContactScreen')}
-          />
-        </View>
+        <CustomButton
+          buttonText="Düzenle"
+          pressed={() => navigation.navigate('EditScreen')}
+        />
       </View>
-
-      <CustomButton
-        buttonText="Düzenle"
-        pressed={() => navigation.navigate('EditScreen')}
-      />
-
-      <Button
+      </View>
+      {/* kaldirilacak */}
+      {/* <Button
         title="Go to Tutorial"
         onPress={() => navigation.navigate('Tutorial')}
       />
       <Button
-        title="Location"
-        onPress={() => navigation.navigate('LocationScreen')}
-      />
+        title="TutorialBackground"
+        onPress={() => navigation.navigate('TutorialBackground')}
+      /> */}
     </View>
   );
 };
@@ -171,9 +178,29 @@ export default HomeScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
+  },
+  backgroundImg:{
+    width:'100%',
+    height:'22%',
+    borderBottomLeftRadius:85,
+  },
+  lacivert:{
+    width:'100%',
+    height:'78%',
+    backgroundColor: '#0c0d34',
+    bottom:0,
+    position:'absolute',
+  },
+  containerBox: {
+    width: '100%',
+    height: '85%',
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white',
+    top:0,
+    borderRadius: 85,
+    borderTopLeftRadius:0,
   },
   manuelAddContainer: {
     justifyContent: 'center',

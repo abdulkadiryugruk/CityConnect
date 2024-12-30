@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -37,6 +37,17 @@ const TutorialScreen = ({ navigation }) => {
   const scrollX = useRef(new Animated.Value(0)).current;
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Animated değerler
+  const animatedKutu1Color = scrollX.interpolate({
+    inputRange: slides.map((_, index) => index * width),
+    outputRange: slides.map((slide) => slide.backgroundColor),
+  });
+
+  const animatedKutu3Color = scrollX.interpolate({
+    inputRange: slides.map((_, index) => index * width),
+    outputRange: slides.map((slide) => slide.backgroundColor),
+  });
+
   const onNextPress = () => {
     if (currentIndex < slides.length - 1) {
       flatListRef.current.scrollToIndex({ index: currentIndex + 1 });
@@ -46,56 +57,96 @@ const TutorialScreen = ({ navigation }) => {
   };
 
   const renderItem = ({ item }) => (
-    <View style={[styles.slide, { backgroundColor: item.backgroundColor }]}>
+    <View style={styles.slide}>
       <Text style={styles.title}>{item.title}</Text>
       <Text style={styles.description}>{item.description}</Text>
     </View>
   );
 
+  useEffect(() => {
+    const listener = scrollX.addListener(({ value }) => {
+      const newIndex = Math.round(value / width);
+      setCurrentIndex(newIndex);
+    });
+    return () => {
+      scrollX.removeListener(listener);
+    };
+  }, [scrollX]);
+
   return (
-    <Animated.View style={styles.container}>
-      <FlatList
-        ref={flatListRef}
-        data={slides}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          { useNativeDriver: false }
-        )}
-        onMomentumScrollEnd={(e) => {
-          const newIndex = Math.round(e.nativeEvent.contentOffset.x / width);
-          setCurrentIndex(newIndex);
-        }}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-      />
+    <View style={styles.container}>
+      {/* Arkaplan Katmanları */}
+      <Animated.View style={[styles.kutu1, { backgroundColor: animatedKutu1Color }]}></Animated.View>
+      <Animated.View style={[styles.kutu3, { backgroundColor: animatedKutu3Color }]}></Animated.View>
+      <View style={styles.kutu2}></View>
 
-      <View style={styles.pagination}>
-        {slides.map((_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.dot,
-              currentIndex === index ? styles.activeDot : styles.inactiveDot,
-            ]}
-          />
-        ))}
+      {/* İçerik */}
+      <View style={styles.content}>
+        <FlatList
+          ref={flatListRef}
+          data={slides}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { useNativeDriver: false }
+          )}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+        />
+
+        <View style={styles.pagination}>
+          {slides.map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.dot,
+                currentIndex === index ? styles.activeDot : styles.inactiveDot,
+              ]}
+            />
+          ))}
+        </View>
+
+        <TouchableOpacity style={styles.button} onPress={onNextPress}>
+          <Text style={styles.buttonText}>
+            {currentIndex === slides.length - 1 ? 'Bitti' : 'Sonraki'}
+          </Text>
+        </TouchableOpacity>
       </View>
-
-      <TouchableOpacity style={styles.button} onPress={onNextPress}>
-        <Text style={styles.buttonText}>
-          {currentIndex === slides.length - 1 ? 'Bitti' : 'Sonraki'}
-        </Text>
-      </TouchableOpacity>
-    </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
+  },
+  kutu1: {
+    width: '100%',
+    height: '70%',
+    borderBottomRightRadius: 85,
+    position: 'absolute',
+  },
+  kutu2: {
+    width: '100%',
+    height: '30%',
+    backgroundColor: '#fff',
+    borderTopLeftRadius:85,
+    bottom: 0,
+    position: 'absolute',
+  },
+  kutu3: {
+    width: '100%',
+    height: '30%',
+    position: 'absolute',
+    bottom: 0,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   slide: {
     width,
@@ -118,16 +169,23 @@ const styles = StyleSheet.create({
   },
   button: {
     position: 'absolute',
-    bottom: 40,
+    bottom: 75,
     alignSelf: 'center',
     padding: 10,
-    backgroundColor: 'blue',
-    borderRadius: 5,
+    backgroundColor: '#f3f3f5',
+    borderRadius: 50,
+    width: '50%',
+    height: 50,
   },
-  buttonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+  buttonText: {
+    color: 'black',
+    fontWeight: 'bold',
+    fontSize: 19,
+    textAlign: 'center',
+  },
   pagination: {
     position: 'absolute',
-    bottom: 100,
+    bottom: 140,
     flexDirection: 'row',
     alignSelf: 'center',
   },
@@ -135,9 +193,9 @@ const styles = StyleSheet.create({
     height: 10,
     width: 10,
     borderRadius: 5,
-    marginHorizontal: 5,
+    marginHorizontal: 10,
   },
-  activeDot: { backgroundColor: 'blue' },
+  activeDot: { backgroundColor: '#2cb9b0' },
   inactiveDot: { backgroundColor: '#ccc' },
 });
 

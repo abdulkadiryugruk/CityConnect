@@ -91,16 +91,16 @@ const styles = StyleSheet.create({
     paddingRight: '10%',
   },
   number: {
-    width: '10%',
+    width: '20%',
     fontSize: 20,
     fontWeight: '600',
     color: 'gray',
   },
   cityItem: {
-    flex: 1,
     padding: 15,
-    backgroundColor: '#2196F3',
-    borderRadius: 10,
+    backgroundColor: '#2cb9b0',
+    borderRadius: 50,
+    width:'70%',
     justifyContent: 'center',
   },
   cityText: {
