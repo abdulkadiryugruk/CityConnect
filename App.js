@@ -49,27 +49,27 @@ const App = () => {
           component={HomeScreen}
         />
         <Stack.Screen
-          options={{headerShown: true}}
+          options={{headerShown: false}}
           name="SelectCityScreen"
           component={SelectCityScreen}
         />
         <Stack.Screen
-          options={{headerShown: true}}
+          options={{headerShown: false}}
           name="CityandContactsScreen"
           component={CityandContactsScreen}
         />
         <Stack.Screen
-          options={{headerShown: true}}
+          options={{headerShown: false}}
           name="SelectContactScreen"
           component={SelectContactScreen}
         />
         <Stack.Screen
-          options={{headerShown: true}}
+          options={{headerShown: false}}
           name="ContactAndCityScreen"
           component={ContactAndCityScreen}
         />
         <Stack.Screen
-          options={{headerShown: true}}
+          options={{headerShown: false}}
           name="EditScreen"
           component={EditScreen}
         />

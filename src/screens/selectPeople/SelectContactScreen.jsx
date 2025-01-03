@@ -1,9 +1,10 @@
-import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import {StyleSheet, Text, View, FlatList, TouchableOpacity} from 'react-native';
+import React, {useState, useEffect} from 'react';
 import RNFS from 'react-native-fs'; // Dosya sistemi için
 import CustomTextInput from '../../components/CustomTextInput';
 import Contacts from 'react-native-contacts'; // Rehberdeki kişileri almak için
-import { useRoute, useNavigation } from '@react-navigation/native'; // Parametre almak için
+import {useRoute, useNavigation} from '@react-navigation/native'; // Parametre almak için
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const SelectContactScreen = () => {
   const route = useRoute(); // Ekrana gönderilen parametreyi al
@@ -28,11 +29,11 @@ const SelectContactScreen = () => {
         } else {
           console.log('Rehber izni verilmedi');
         }
-  
+
         // UserCities.json dosyasındaki şehir ve kişileri yükle
         const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
         const fileExists = await RNFS.exists(filePath);
-  
+
         if (fileExists) {
           const fileContent = await RNFS.readFile(filePath, 'utf8');
           const jsonData = JSON.parse(fileContent);
@@ -47,13 +48,13 @@ const SelectContactScreen = () => {
     loadPeopleFromFile();
   }, []); // Bu useEffect sadece component mount edildiğinde çalışacak
 
-
   useEffect(() => {
     // Rehberdeki kişilerle UserCities.json'daki kişileri karşılaştırarak eşleşmeyenleri ayıklıyoruz
-    const unmatched = peoples.filter(person =>
-      !citiesData.some(city =>
-        city.people?.some(p => p.fullName === person.displayName),
-      ),
+    const unmatched = peoples.filter(
+      person =>
+        !citiesData.some(city =>
+          city.people?.some(p => p.fullName === person.displayName),
+        ),
     );
     setUnmatchedPeoples(unmatched);
   }, [peoples, citiesData]); // peoples ve citiesData değiştiğinde tekrar çalışacak
@@ -61,43 +62,61 @@ const SelectContactScreen = () => {
   const filteredUnmatchedPeoples = unmatchedPeoples.filter(
     person =>
       person.displayName &&
-      person.displayName.toLowerCase().includes(search?.toLowerCase() || '')
+      person.displayName.toLowerCase().includes(search?.toLowerCase() || ''),
   );
-  const removeMatchedPerson = (personName) => {
-    setUnmatchedPeoples((prev) =>
-      prev.filter((person) => person.displayName !== personName)
+  const removeMatchedPerson = personName => {
+    setUnmatchedPeoples(prev =>
+      prev.filter(person => person.displayName !== personName),
     );
   };
-  
-
 
   return (
     <View style={styles.container}>
-      <CustomTextInput
-        placeholder={'Eşleşmeyen Kişi Ara'}
-        value={search}
-        onChangeText={setSearch}
-      />
-      {filteredUnmatchedPeoples.length === 0 ? (
-        <Text style={styles.noResultText}>Eşleşmeyen kişi bulunamadı!</Text>
-      ) : (
-        <FlatList
-          style={styles.listStyle}
-          data={filteredUnmatchedPeoples}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.row}>
-				<TouchableOpacity
-				style= {styles.peopleItem}
-				onPress={()=>navigation.navigate(
-				'ContactAndCityScreen',	{peopleName: item.displayName , removeMatchedPerson})}
-				>
-              <Text style={styles.cityText}>{item.displayName}</Text>
-			  </TouchableOpacity>
-            </View>
-          )}
+      <View style={styles.backgroundTop}>
+        <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                  <Icon name="arrow-back" size={24} color="#fff" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Şehir Seç</Text>
+                <TouchableOpacity style={styles.rightIcon}>
+                  <Icon name="cart-outline" size={24} color="#fff" />
+                </TouchableOpacity>
+              </View>
+        <CustomTextInput
+          placeholder={'Kişi Ara'}
+          value={search}
+          onChangeText={setSearch}
         />
-      )}
+      </View>
+
+      <View style={styles.backgroundBottom}>
+        <View style={styles.backgroundTopRight}></View>
+        <View style={styles.body}>
+          {filteredUnmatchedPeoples.length === 0 ? (
+            <Text style={styles.noResultText}>Eşleşmeyen kişi bulunamadı!</Text>
+          ) : (
+            <FlatList
+              style={styles.listStyle}
+              data={filteredUnmatchedPeoples}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({item}) => (
+                <View style={styles.row}>
+                  <TouchableOpacity
+                    style={styles.peopleItem}
+                    onPress={() =>
+                      navigation.navigate('ContactAndCityScreen', {
+                        peopleName: item.displayName,
+                        removeMatchedPerson,
+                      })
+                    }>
+                    <Text style={styles.cityText}>{item.displayName}</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+          )}
+        </View>
+      </View>
     </View>
   );
 };
@@ -108,19 +127,41 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
-    paddingHorizontal: 10,
+  },
+  header: {
+    width: '90%',
+    height: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    marginVertical:'3%',
+  },
+  backButton: {
+    padding: 5,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  rightIcon: {
+    padding: 5,
   },
   listStyle: {
     width: '100%',
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
     marginVertical: 5,
+    marginHorizontal:'10%',
+  },
+  peopleItem:{
     padding: 15,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-    justifyContent: 'space-between',
+    backgroundColor: '#f3f3f5',
+    borderRadius: 50,
+    justifyContent: 'center',
+    width:'100%',
   },
   cityText: {
     fontSize: 18,
@@ -133,21 +174,41 @@ const styles = StyleSheet.create({
     marginTop: 10,
     textAlign: 'center',
   },
-  addButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 5,
-    paddingHorizontal: 15,
-    borderRadius: 5,
+
+
+  backgroundTop: {
+    width: '100%',
+    height: '22%',
+    alignItems: 'center',
+    borderBottomLeftRadius: 85,
+    backgroundColor: '#2cb9b0',
+    position: 'absolute',
+    top: 0,
   },
-  addButtonText: {
-    color: 'white',
-    fontWeight: '600',
+  backgroundTopRight: {
+    width: '20%',
+    height: '50%',
+    backgroundColor: '#2cb9b0',
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
-  cityTitle: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 0,
+  backgroundBottom: {
+    width: '100%',
+    height: '78%',
+    backgroundColor: '#0c0d34',
+    bottom: 0,
+    position: 'absolute',
+  },
+  body: {
+    width: '100%',
+    height: '85%',
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    top: 0,
+    borderRadius: 85,
+    borderTopLeftRadius: 0,
+    paddingHorizontal:'5%'
   },
 });

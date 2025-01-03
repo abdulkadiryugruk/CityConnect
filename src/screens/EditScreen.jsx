@@ -3,12 +3,15 @@ import React, {useState, useEffect} from 'react';
 import CustomTextInput from '../components/CustomTextInput';
 import {View, Text, TouchableOpacity, FlatList, StyleSheet} from 'react-native';
 import RNFS from 'react-native-fs'; // Dosya işlemleri için
+import {useNavigation} from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Ionicons'; // İkonlar için
 
 const EditScreen = () => {
   const [cities, setCities] = useState([]);
   const [expandedCities, setExpandedCities] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const filePath = `${RNFS.DocumentDirectoryPath}/UserCities.json`;
+  const navigation = useNavigation();
 
   // Uygulama başladığında dosyayı yükle veya oluştur
   useEffect(() => {
@@ -132,12 +135,29 @@ const EditScreen = () => {
 
   return (
     <View style={styles.container}>
+<View style={styles.backgroundTop}>
+
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Icon name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Şehir Seç</Text>
+        <TouchableOpacity style={styles.rightIcon}>
+          <Icon name="cart-outline" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
       <CustomTextInput
         style={styles.searchBar}
         placeholder={'Şehir veya kisi Ara...'}
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
+</View>
+
+      <View style={styles.backgroundBottom}>
+        <View style={styles.backgroundTopRight}></View>
+        <View style={styles.body}>
       <FlatList
         data={filteredCities}
         keyExtractor={(item, index) => `${item.name}-${index}`}
@@ -145,6 +165,8 @@ const EditScreen = () => {
         initialNumToRender={10}
         windowSize={5}
       />
+      </View>
+      </View>
     </View>
   );
 };
@@ -155,7 +177,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
-    padding: 10,
+  },
+  header: {
+    width: '90%',
+    height: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    marginVertical:'3%',
+  },
+  backButton: {
+    padding: 5,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  rightIcon: {
+    padding: 5,
   },
   searchBar: {
     height: 40,
@@ -163,9 +204,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 10,
-    marginBottom: 10,
   },
   cityContainer: {
+    width:'72%',
+    marginHorizontal:'14%',
     marginBottom: 15,
     borderWidth: 1,
     borderColor: '#ccc',
@@ -199,5 +241,39 @@ const styles = StyleSheet.create({
   removeButtonText: {
     color: 'white',
     fontSize: 14,
+  },
+  backgroundTop: {
+    width: '100%',
+    height: '22%',
+    alignItems: 'center',
+    borderBottomLeftRadius: 85,
+    backgroundColor: '#2cb9b0',
+    position: 'absolute',
+    top: 0,
+  },
+  backgroundTopRight: {
+    width: '20%',
+    height: '50%',
+    backgroundColor: '#2cb9b0',
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  backgroundBottom: {
+    width: '100%',
+    height: '78%',
+    backgroundColor: '#0c0d34',
+    bottom: 0,
+    position: 'absolute',
+  },
+  body: {
+    width:'100%',
+    height: '85%',
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    top: 0,
+    borderRadius: 85,
+    borderTopLeftRadius: 0,
+    paddingVertical:5,
   },
 });

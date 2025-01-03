@@ -1,17 +1,15 @@
-import {StyleSheet,View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import React from 'react';
 
-const CustomBody = () => {
+const CustomBody = ({children}) => {
   return (
     <View style={styles.container}>
-		<View style={styles.top}>
-		<View style={styles.backgroundTop}></View>
-		<View style={styles.backgroundTopRight}></View>
-		</View>
-		<View style={styles.backgroundBottom}>
-			<View style={styles.body}></View>
-		</View>
-      <View style={styles.body}></View>
+        <View style={styles.backgroundTop}>
+        </View>
+      <View style={styles.backgroundBottom}>
+        <View style={styles.backgroundTopRight}></View>
+        <View style={styles.body}>{children}</View>
+      </View>
     </View>
   );
 };
@@ -23,25 +21,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  top:{
-	width:'100%',
-	height:'50%',
+  top: {
+    width: '100%',
+    height: '50%',
   },
   backgroundTop: {
     width: '100%',
     height: '22%',
     borderBottomLeftRadius: 85,
     backgroundColor: '#2cb9b0',
-	position:'absolute',
-	top:0,
+    position: 'absolute',
+    top: 0,
   },
-  backgroundTopRight:{
-	width:'20%',
-	height:'40%',
+  backgroundTopRight: {
+    width: '20%',
+    height: '50%',
     backgroundColor: '#2cb9b0',
-position:'absolute',
-right:0,
-top:0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
   backgroundBottom: {
     width: '100%',

@@ -3,6 +3,7 @@ import React, {useState, useEffect} from 'react';
 import CustomTextInput from '../../components/CustomTextInput';
 import RNFS from 'react-native-fs'; // Dosya sistemi için
 import {useNavigation, useRoute} from '@react-navigation/native'; // useNavigation hook'u eklendi
+import Icon from 'react-native-vector-icons/Ionicons'; // İkonlar için
 
 const ContactAndCityScreen = () => {
   const route = useRoute();
@@ -63,7 +64,7 @@ const ContactAndCityScreen = () => {
       removeMatchedPerson(peopleName);
 
       // Kullanıcıyı bilgilendirme
-      alert(`${peopleName} ${city.name} şehrine eklendi!`);
+      alert(`${peopleName}, ${city.name} şehrine eklendi!`);
       navigation.goBack(); // İşlem sonrası önceki ekrana dön
     } catch (error) {
       console.error('Kişi eklenirken hata oluştu:', error);
@@ -72,7 +73,6 @@ const ContactAndCityScreen = () => {
 
   const renderCityItem = ({ item, index }) => (
     <View style={styles.row}>
-      <Text style={styles.number}>{index + 1}.</Text>
       <View style={styles.cityContainer}>
         <Text style={styles.cityText}>{item.name.toUpperCase()}</Text>
         <TouchableOpacity
@@ -88,14 +88,32 @@ const ContactAndCityScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.peopleNameText}>{peopleName} Kişisi</Text>
+      <View style={styles.backgroundTop}>
+
+<View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}>
+            <Icon name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{peopleName} Kişisi</Text>
+          <TouchableOpacity style={styles.rightIcon}>
+            <Icon name="cart-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
       <CustomTextInput
         placeholder={'Şehir Ara'}
         value={search}
         onChangeText={text => setSearch(text)}
         style={styles.searchInput}
       />
+      </View>
 
+      <View style={styles.backgroundBottom}>
+<View style={styles.backgroundTopRight}></View>
+
+<View style={styles.body}>
       {filteredCities.length === 0 ? (
         <Text style={styles.noResultText}>Şehir bulunamadı!</Text>
       ) : (
@@ -108,6 +126,8 @@ const ContactAndCityScreen = () => {
           removeClippedSubviews={true}
         />
       )}
+      </View>
+      </View>
     </View>
   );
 };
@@ -120,16 +140,38 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     paddingHorizontal: 10,
   },
+  header: {
+    width: '90%',
+    height: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    marginVertical:'3%',
+  },
+  backButton: {
+    padding: 5,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  rightIcon: {
+    padding: 5,
+  },
   listStyle: {
     width: '100%',
   },
   row: {
+    width:'72%',
+    marginHorizontal:'14%',
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 5,
     padding: 15,
     backgroundColor: '#f9f9f9',
-    borderRadius: 10,
+    borderRadius: 85,
     justifyContent: 'space-between',
   },
   number: {
@@ -145,7 +187,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cityText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
     color: 'black',
     textAlign: 'left',
@@ -166,6 +208,41 @@ const styles = StyleSheet.create({
     color: 'gray',
     marginTop: 10,
     textAlign: 'center',
+  },
+  backgroundTop: {
+    width: '100%',
+    height: '22%',
+    alignItems: 'center',
+    borderBottomLeftRadius: 85,
+    backgroundColor: '#2cb9b0',
+    position: 'absolute',
+    top: 0,
+  },
+  backgroundTopRight: {
+    width: '20%',
+    height: '50%',
+    backgroundColor: '#2cb9b0',
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  backgroundBottom: {
+    width: '100%',
+    height: '78%',
+    backgroundColor: '#0c0d34',
+    bottom: 0,
+    position: 'absolute',
+  },
+  body: {
+    width: '100%',
+    height: '85%',
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    top: 0,
+    borderRadius: 85,
+    borderTopLeftRadius: 0,
+    paddingVertical:5,
   },
 });
 

@@ -1,9 +1,10 @@
-import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import {StyleSheet, Text, View, FlatList, TouchableOpacity} from 'react-native';
+import React, {useState, useEffect} from 'react';
 import RNFS from 'react-native-fs'; // Dosya sistemi için
 import CustomTextInput from '../../components/CustomTextInput';
 import Contacts from 'react-native-contacts'; // Rehberdeki kişileri almak için
-import { useRoute, useNavigation } from '@react-navigation/native'; // Parametre almak için
+import {useRoute, useNavigation} from '@react-navigation/native'; // Parametre almak için
+import Icon from 'react-native-vector-icons/Ionicons'; // İkonlar için
 
 const CityandContactsScreen = () => {
   const route = useRoute(); // Ekrana gönderilen parametreyi al
@@ -12,7 +13,7 @@ const CityandContactsScreen = () => {
   const [unmatchedPeoples, setUnmatchedPeoples] = useState([]); // Eşleşmeyen kişiler
   const [search, setSearch] = useState(''); // Arama metni
   const [citiesData, setCitiesData] = useState([]); // UserCities.json verisi
-  const { cityName, cityId } = route.params; // Parametreleri destructuring ile alıyoruz
+  const {cityName, cityId} = route.params; // Parametreleri destructuring ile alıyoruz
 
   useEffect(() => {
     const loadPeopleFromFile = async () => {
@@ -29,11 +30,11 @@ const CityandContactsScreen = () => {
         } else {
           console.log('Rehber izni verilmedi');
         }
-  
+
         // UserCities.json dosyasındaki şehir ve kişileri yükle
         const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
         const fileExists = await RNFS.exists(filePath);
-  
+
         if (fileExists) {
           const fileContent = await RNFS.readFile(filePath, 'utf8');
           const jsonData = JSON.parse(fileContent);
@@ -48,13 +49,13 @@ const CityandContactsScreen = () => {
     loadPeopleFromFile();
   }, []); // Bu useEffect sadece component mount edildiğinde çalışacak
 
-
   useEffect(() => {
     // Rehberdeki kişilerle UserCities.json'daki kişileri karşılaştırarak eşleşmeyenleri ayıklıyoruz
-    const unmatched = peoples.filter(people =>
-      !citiesData.some(city =>
-        city.people?.some(p => p.fullName === people.displayName),
-      ),
+    const unmatched = peoples.filter(
+      people =>
+        !citiesData.some(city =>
+          city.people?.some(p => p.fullName === people.displayName),
+        ),
     );
     setUnmatchedPeoples(unmatched);
   }, [peoples, citiesData]); // peoples ve citiesData değiştiğinde tekrar çalışacak
@@ -62,10 +63,10 @@ const CityandContactsScreen = () => {
   const filteredUnmatchedPeoples = unmatchedPeoples.filter(
     people =>
       people.displayName &&
-      people.displayName.toLowerCase().includes(search?.toLowerCase() || '')
+      people.displayName.toLowerCase().includes(search?.toLowerCase() || ''),
   );
 
-  const handleAddToCity = async (people) => {
+  const handleAddToCity = async people => {
     try {
       // Şehirler listesine ekleme işlemi
       const updatedCitiesData = citiesData.map(city => {
@@ -73,7 +74,7 @@ const CityandContactsScreen = () => {
           // Seçilen şehirdeki kişilere ekleme
           return {
             ...city,
-            people: [...(city.people || []), { fullName: people.displayName }]
+            people: [...(city.people || []), {fullName: people.displayName}],
           };
         }
         return city;
@@ -81,50 +82,74 @@ const CityandContactsScreen = () => {
 
       // Güncellenmiş şehirler verisini UserCities.json dosyasına kaydetme
       const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
-      await RNFS.writeFile(filePath, JSON.stringify({ cities: updatedCitiesData }), 'utf8');
-  
+      await RNFS.writeFile(
+        filePath,
+        JSON.stringify({cities: updatedCitiesData}),
+        'utf8',
+      );
+
       // Rehberdeki kişiyi eşleşen kişilerden çıkarma
-      setUnmatchedPeoples(unmatchedPeoples.filter(p => p.displayName !== people.displayName));
-  
+      setUnmatchedPeoples(
+        unmatchedPeoples.filter(p => p.displayName !== people.displayName),
+      );
+
       // Güncellenmiş şehirler verisini state'e kaydetme
       setCitiesData(updatedCitiesData);
-  
+
       console.log(`Kişi ${people.displayName} ${cityName} şehrine eklendi!`);
     } catch (error) {
       console.error('Şehre eklerken hata oluştu:', error);
     }
   };
-  
-  
 
   return (
     <View style={styles.container}>
-      <Text style={styles.cityTitle}>{cityName} Şehri</Text>
-      <CustomTextInput
-        placeholder={'Eşleşmeyen Kişi Ara'}
-        value={search}
-        onChangeText={setSearch}
-      />
-      {filteredUnmatchedPeoples.length === 0 ? (
-        <Text style={styles.noResultText}>Eşleşmeyen kişi bulunamadı!</Text>
-      ) : (
-        <FlatList
-          style={styles.listStyle}
-          data={filteredUnmatchedPeoples}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.row}>
-              <Text style={styles.cityText}>{item.displayName}</Text>
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={() => handleAddToCity(item)} // Kişi eklenince listeden kaybolacak
-              >
-                <Text style={styles.addButtonText}>Şehre Ekle</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+      <View style={styles.backgroundTop}>
+
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}>
+            <Icon name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{cityName} Şehri</Text>
+          <TouchableOpacity style={styles.rightIcon}>
+            <Icon name="cart-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
+        <CustomTextInput
+          placeholder={'Eşleşmeyen Kişi Ara'}
+          value={search}
+          onChangeText={setSearch}
         />
-      )}
+      </View>
+
+      <View style={styles.backgroundBottom}>
+        <View style={styles.backgroundTopRight}></View>
+        <View style={styles.body}>
+          {filteredUnmatchedPeoples.length === 0 ? (
+            <Text style={styles.noResultText}>Eşleşmeyen kişi bulunamadı!</Text>
+          ) : (
+            <FlatList
+              style={styles.listStyle}
+              data={filteredUnmatchedPeoples}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({item}) => (
+                <View style={styles.row}>
+                  <Text style={styles.cityText}>{item.displayName}</Text>
+                  <TouchableOpacity
+                    style={styles.addButton}
+                    onPress={() => handleAddToCity(item)} // Kişi eklenince listeden kaybolacak
+                  >
+                    <Text style={styles.addButtonText}>Şehre Ekle</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+          )}
+        </View>
+      </View>
     </View>
   );
 };
@@ -137,16 +162,38 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     paddingHorizontal: 10,
   },
+  header: {
+    width: '90%',
+    height: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    marginVertical:'3%',
+  },
+  backButton: {
+    padding: 5,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  rightIcon: {
+    padding: 5,
+  },
   listStyle: {
     width: '100%',
   },
   row: {
+    width:'72%',
+    marginHorizontal:'14%',
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 5,
     padding: 15,
     backgroundColor: '#f9f9f9',
-    borderRadius: 10,
+    borderRadius: 85,
     justifyContent: 'space-between',
   },
   cityText: {
@@ -176,5 +223,39 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10,
     marginBottom: 0,
+  },
+  backgroundTop: {
+    width: '100%',
+    height: '22%',
+    alignItems: 'center',
+    borderBottomLeftRadius: 85,
+    backgroundColor: '#2cb9b0',
+    position: 'absolute',
+    top: 0,
+  },
+  backgroundTopRight: {
+    width: '20%',
+    height: '50%',
+    backgroundColor: '#2cb9b0',
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  backgroundBottom: {
+    width: '100%',
+    height: '78%',
+    backgroundColor: '#0c0d34',
+    bottom: 0,
+    position: 'absolute',
+  },
+  body: {
+    width: '100%',
+    height: '85%',
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    top: 0,
+    borderRadius: 85,
+    borderTopLeftRadius: 0,
   },
 });

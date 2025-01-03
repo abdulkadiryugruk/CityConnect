@@ -169,7 +169,7 @@ const HomeScreen = ({navigation}) => {
         title="TutorialBackground"
         onPress={() => navigation.navigate('TutorialBackground')}
       /> */}
-    </View>
+    </View> 
   );
 };
 
