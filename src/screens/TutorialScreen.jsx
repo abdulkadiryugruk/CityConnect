@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Animated,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons'; // İkonlar için
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -109,9 +111,10 @@ const TutorialScreen = ({ navigation }) => {
         </View>
 
         <TouchableOpacity style={styles.button} onPress={onNextPress}>
-          <Text style={styles.buttonText}>
+          {/* <Text style={styles.buttonText}>
             {currentIndex === slides.length - 1 ? 'Bitti' : 'Sonraki'}
-          </Text>
+          </Text> */}
+          <Icon name="arrow-right-alt" size={40} color="black"/>
         </TouchableOpacity>
       </View>
     </View>
@@ -169,19 +172,11 @@ const styles = StyleSheet.create({
   },
   button: {
     position: 'absolute',
-    bottom: 75,
+    bottom: 50,
     alignSelf: 'center',
     padding: 10,
     backgroundColor: '#f3f3f5',
     borderRadius: 50,
-    width: '50%',
-    height: 50,
-  },
-  buttonText: {
-    color: 'black',
-    fontWeight: 'bold',
-    fontSize: 19,
-    textAlign: 'center',
   },
   pagination: {
     position: 'absolute',

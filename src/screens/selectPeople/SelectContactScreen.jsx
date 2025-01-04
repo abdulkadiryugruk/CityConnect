@@ -4,7 +4,7 @@ import RNFS from 'react-native-fs'; // Dosya sistemi için
 import CustomTextInput from '../../components/CustomTextInput';
 import Contacts from 'react-native-contacts'; // Rehberdeki kişileri almak için
 import {useRoute, useNavigation} from '@react-navigation/native'; // Parametre almak için
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const SelectContactScreen = () => {
   const route = useRoute(); // Ekrana gönderilen parametreyi al
@@ -73,15 +73,15 @@ const SelectContactScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.backgroundTop}>
-        <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                  <Icon name="arrow-back" size={24} color="#fff" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Şehir Seç</Text>
-                <TouchableOpacity style={styles.rightIcon}>
-                  <Icon name="cart-outline" size={24} color="#fff" />
-                </TouchableOpacity>
-              </View>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Icon name="trending-flat" size={24} color="#fff" style={{ transform: [{ rotate: '180deg' }] }}/>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Şehir Seç</Text>
+        <TouchableOpacity style={styles.rightIcon}>
+          <Icon name="close" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
         <CustomTextInput
           placeholder={'Kişi Ara'}
           value={search}
@@ -138,7 +138,9 @@ const styles = StyleSheet.create({
     marginVertical:'3%',
   },
   backButton: {
-    padding: 5,
+        padding: 10,
+    backgroundColor:'#42c0b8',
+    borderRadius:50,
   },
   headerTitle: {
     fontSize: 18,
@@ -146,7 +148,9 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   rightIcon: {
-    padding: 5,
+        padding: 10,
+    backgroundColor:'#42c0b8',
+    borderRadius:50,
   },
   listStyle: {
     width: '100%',

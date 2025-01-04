@@ -4,7 +4,7 @@ import RNFS from 'react-native-fs'; // Dosya sistemi için
 import CustomTextInput from '../../components/CustomTextInput';
 import Contacts from 'react-native-contacts'; // Rehberdeki kişileri almak için
 import {useRoute, useNavigation} from '@react-navigation/native'; // Parametre almak için
-import Icon from 'react-native-vector-icons/Ionicons'; // İkonlar için
+import Icon from 'react-native-vector-icons/MaterialIcons'; // İkonlar için
 
 const CityandContactsScreen = () => {
   const route = useRoute(); // Ekrana gönderilen parametreyi al
@@ -105,18 +105,15 @@ const CityandContactsScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.backgroundTop}>
-
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}>
-            <Icon name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{cityName} Şehri</Text>
-          <TouchableOpacity style={styles.rightIcon}>
-            <Icon name="cart-outline" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Icon name="trending-flat" size={24} color="#fff" style={{ transform: [{ rotate: '180deg' }] }}/>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Şehir Seç</Text>
+        <TouchableOpacity style={styles.rightIcon}>
+          <Icon name="close" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
 
         <CustomTextInput
           placeholder={'Eşleşmeyen Kişi Ara'}
@@ -160,7 +157,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
-    paddingHorizontal: 10,
   },
   header: {
     width: '90%',
@@ -169,10 +165,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 15,
-    marginVertical:'3%',
+    marginVertical: '3%',
   },
   backButton: {
-    padding: 5,
+    padding: 10,
+    backgroundColor: '#42c0b8',
+    borderRadius: 50,
   },
   headerTitle: {
     fontSize: 18,
@@ -180,14 +178,16 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   rightIcon: {
-    padding: 5,
+    padding: 10,
+    backgroundColor: '#42c0b8',
+    borderRadius: 50,
   },
   listStyle: {
     width: '100%',
   },
   row: {
-    width:'72%',
-    marginHorizontal:'14%',
+    width: '72%',
+    marginHorizontal: '14%',
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 5,
