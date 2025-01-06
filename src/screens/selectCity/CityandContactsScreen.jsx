@@ -19,17 +19,14 @@ const CityandContactsScreen = () => {
     const loadPeopleFromFile = async () => {
       try {
         // Rehberdeki kişileri almak için izin iste
-        const permission = await Contacts.requestPermission();
-        if (permission === 'authorized') {
+
           const contacts = await Contacts.getAll();
           // Alfabetik sıraya göre sırala
           const sortedContacts = contacts.sort((a, b) =>
             a.displayName.localeCompare(b.displayName),
           );
           setPeoples(sortedContacts); // Sıralanmış listeyi state'e ata
-        } else {
-          console.log('Rehber izni verilmedi');
-        }
+
 
         // UserCities.json dosyasındaki şehir ve kişileri yükle
         const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';

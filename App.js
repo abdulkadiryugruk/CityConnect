@@ -10,11 +10,12 @@ import EditScreen from './src/screens/EditScreen';
 import SelectContactScreen from './src/screens/selectPeople/SelectContactScreen';
 import ContactAndCityScreen from './src/screens/selectPeople/ContactAndCityScreen';
 import TutorialBackground from './src/screens/TutorialBackground';
+import YourCityScreen from './src/screens/YourCityScreen';
 
 const Stack = createNativeStackNavigator();
 
 
-
+export const navigationRef = React.createRef();
 
 
 const App = () => {
@@ -34,7 +35,7 @@ const App = () => {
 
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator>
         {/* {!isTutorialShown && ( */}
         <Stack.Screen
@@ -77,6 +78,11 @@ const App = () => {
           options={{headerShown: true}}
           name="TutorialBackground"
           component={TutorialBackground}
+        />
+        <Stack.Screen
+          options={{headerShown: false}}
+          name="YourCityScreen"
+          component={YourCityScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>

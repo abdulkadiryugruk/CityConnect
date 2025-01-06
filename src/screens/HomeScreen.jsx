@@ -1,10 +1,17 @@
+/* eslint-disable react-native/no-inline-styles */
 import {Button, StyleSheet, Text, View, Alert, Image} from 'react-native';
-import React, {useState, useCallback} from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import CustomButton from '../components/CustomButton';
 import {Dimensions} from 'react-native';
 import RNFS from 'react-native-fs';
-import {requestContactPermission} from './permissions/ContactsPermission';
 import citiesData from '../data/countries/Turkey/Cities.json';
+import {requestContactPermission} from './permissions/ContactsPermission';
+import {requestNotificationPermission} from './permissions/NotificationPermission';
+import {
+  configureNotifications,
+  startPeriodicNotification,
+  showNotification,
+} from './notification/notificationService';
 
 const {width} = Dimensions.get('window');
 const dynamicFontSize = width * 0.08;
@@ -43,6 +50,18 @@ const FileOperations = {
 
 const HomeScreen = ({navigation}) => {
   const [isScanning, setIsScanning] = useState(false);
+
+  // bildirim izni alma
+  useEffect(() => {
+    const setupNotifications = async () => {
+      const hasPermission = await requestNotificationPermission();
+      if (hasPermission) {
+        configureNotifications();
+      }
+    };
+
+    setupNotifications();
+  }, []);
 
   // Rehber tarama işlemi
   const handleScanContacts = useCallback(async () => {
@@ -114,6 +133,15 @@ const HomeScreen = ({navigation}) => {
     }
   }, []);
 
+
+
+  useEffect(() => {
+    showNotification();
+  }, []);
+
+
+
+
   return (
     <View style={styles.container}>
       {/* kaldirilacak */}
@@ -126,39 +154,43 @@ const HomeScreen = ({navigation}) => {
         source={require('../images/HomeBackground.png')}
       />
       <View style={styles.lacivert}>
-      <View style={styles.containerBox}>
-        <CustomButton
-          customStyle={{marginVertical: 30}}
-          buttonText={isScanning ? 'Taranıyor...' : 'Rehberi Tara'}
-          pressed={handleScanContacts}
-          disabled={isScanning}
-        />
+        <View style={styles.containerBox}>
+          <CustomButton
+            customStyle={{marginVertical: 30}}
+            buttonText={isScanning ? 'Taranıyor...' : 'Rehberi Tara'}
+            pressed={handleScanContacts}
+            disabled={isScanning}
+          />
 
-        <View style={styles.manuelAddContainer}>
-          <View style={styles.manuelAddLabel}>
-            <Text style={styles.labelText}>Manuel Ekleme</Text>
+          <View style={styles.manuelAddContainer}>
+            <View style={styles.manuelAddLabel}>
+              <Text style={styles.labelText}>Manuel Ekleme</Text>
+            </View>
+            <View style={styles.manuelAddContent}>
+              <CustomButton
+                customStyle={{height: 40, marginVertical: 25}}
+                textStyle={{fontSize: 20}}
+                buttonText="Şehir Seç"
+                pressed={() => navigation.navigate('SelectCityScreen')}
+              />
+              <CustomButton
+                customStyle={{height: 40, marginBottom: 20, marginVertical: 0}}
+                textStyle={{fontSize: 20}}
+                buttonText="Kişi Seç"
+                pressed={() => navigation.navigate('SelectContactScreen')}
+              />
+            </View>
           </View>
-          <View style={styles.manuelAddContent}>
-            <CustomButton
-              customStyle={{height: 40, marginVertical: 25}}
-              textStyle={{fontSize: 20}}
-              buttonText="Şehir Seç"
-              pressed={() => navigation.navigate('SelectCityScreen')}
-            />
-            <CustomButton
-              customStyle={{height: 40, marginBottom: 20, marginVertical: 0}}
-              textStyle={{fontSize: 20}}
-              buttonText="Kişi Seç"
-              pressed={() => navigation.navigate('SelectContactScreen')}
-            />
-          </View>
+
+          <CustomButton
+            buttonText="Düzenle"
+            pressed={() => navigation.navigate('EditScreen')}
+          />
+          <CustomButton
+            buttonText="sehir"
+            pressed={() => navigation.navigate('YourCityScreen')}
+          />
         </View>
-
-        <CustomButton
-          buttonText="Düzenle"
-          pressed={() => navigation.navigate('EditScreen')}
-        />
-      </View>
       </View>
       {/* kaldirilacak */}
       {/* <Button
@@ -169,7 +201,7 @@ const HomeScreen = ({navigation}) => {
         title="TutorialBackground"
         onPress={() => navigation.navigate('TutorialBackground')}
       /> */}
-    </View> 
+    </View>
   );
 };
 
@@ -180,17 +212,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  backgroundImg:{
-    width:'100%',
-    height:'22%',
-    borderBottomLeftRadius:85,
+  backgroundImg: {
+    width: '100%',
+    height: '22%',
+    borderBottomLeftRadius: 85,
   },
-  lacivert:{
-    width:'100%',
-    height:'78%',
+  lacivert: {
+    width: '100%',
+    height: '78%',
     backgroundColor: '#0c0d34',
-    bottom:0,
-    position:'absolute',
+    bottom: 0,
+    position: 'absolute',
   },
   containerBox: {
     width: '100%',
@@ -198,9 +230,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    top:0,
+    top: 0,
     borderRadius: 85,
-    borderTopLeftRadius:0,
+    borderTopLeftRadius: 0,
   },
   manuelAddContainer: {
     justifyContent: 'center',
