@@ -11,6 +11,7 @@ import {
   configureNotifications,
   startPeriodicNotification,
   showNotification,
+  scheduleNotification,
 } from './notification/notificationService';
 
 const {width} = Dimensions.get('window');
@@ -51,6 +52,19 @@ const FileOperations = {
 const HomeScreen = ({navigation}) => {
   const [isScanning, setIsScanning] = useState(false);
 
+
+
+
+  //TODO Bildirim deneme
+
+
+
+
+
+
+
+
+  
   // bildirim izni alma
   useEffect(() => {
     const setupNotifications = async () => {
@@ -63,14 +77,13 @@ const HomeScreen = ({navigation}) => {
     setupNotifications();
   }, []);
 
-  // Rehber tarama işlemi
   const handleScanContacts = useCallback(async () => {
-    if (isScanning) return; // Çift tıklama engelleme
-
+    if (isScanning) return;
+  
     setIsScanning(true);
     try {
       const contacts = await requestContactPermission();
-
+  
       if (!contacts) {
         Alert.alert(
           'İzin Gerekli',
@@ -84,24 +97,47 @@ const HomeScreen = ({navigation}) => {
         );
         return;
       }
-
+  
+      // Mevcut dosyayı oku
+      const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
+      const fileExists = await RNFS.exists(filePath);
+      let currentCitiesData = { cities: [] };
+  
+      if (fileExists) {
+        const fileContent = await RNFS.readFile(filePath, 'utf8');
+        currentCitiesData = JSON.parse(fileContent);
+      }
+  
       // Şehirlerle eşleştirme
-      const updatedCities = citiesData.cities.map(city => ({
-        ...city,
-        people: contacts.filter(
+      const updatedCities = currentCitiesData.cities.map(city => {
+        // Rehberde şehirle eşleşen kişileri al
+        const matchedPeople = contacts.filter(
           contact =>
             contact.fullName &&
             city.name &&
             contact.fullName.toLowerCase().includes(city.name.toLowerCase()),
-        ),
-      }));
-
+        );
+  
+        // Mevcut kişileri ve tarama sonuçlarını birleştir, yinelenenleri önle
+        const mergedPeople = [
+          ...city.people,
+          ...matchedPeople.filter(
+            newPerson =>
+              !city.people.some(
+                existingPerson => existingPerson.fullName === newPerson.fullName,
+              ),
+          ),
+        ];
+  
+        return { ...city, people: mergedPeople };
+      });
+  
       // Dosyaya kaydetme
       const saveSuccess = await FileOperations.saveUpdatedCitiesToFile(
         updatedCities,
         'UserCities.json',
       );
-
+  
       if (contacts.length === 0) {
         Alert.alert('Bilgi', 'Rehberinizde kayıtlı kişi bulunamadı.');
         return;
@@ -118,6 +154,7 @@ const HomeScreen = ({navigation}) => {
       setIsScanning(false);
     }
   }, [isScanning]);
+  
 
   // Önbellek temizleme
   const handleClearCache = useCallback(async () => {
@@ -135,9 +172,9 @@ const HomeScreen = ({navigation}) => {
 
 
 
-  useEffect(() => {
-    showNotification();
-  }, []);
+  // useEffect(() => {
+  //   showNotification();
+  // }, []);
 
 
 
