@@ -118,7 +118,8 @@ dependencies {
     } else {
         implementation jscFlavor
     }
-
+    implementation 'com.facebook.react:react-native:+'  // From node_modules
+    implementation project(':react-native-push-notification')
     // Remove legacy support libraries and use AndroidX dependencies
     // Example: androidx.core
     implementation 'androidx.core:core:1.9.0' // Ensure this uses AndroidX version

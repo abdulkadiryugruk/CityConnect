@@ -1,4 +1,3 @@
-/* eslint-disable react-native/no-inline-styles */
 import {Button, StyleSheet, Text, View, Alert, Image} from 'react-native';
 import React, {useState, useCallback, useEffect} from 'react';
 import CustomButton from '../components/CustomButton';
@@ -6,13 +5,8 @@ import {Dimensions} from 'react-native';
 import RNFS from 'react-native-fs';
 import citiesData from '../data/countries/Turkey/Cities.json';
 import {requestContactPermission} from './permissions/ContactsPermission';
-import {requestNotificationPermission} from './permissions/NotificationPermission';
-import {
-  configureNotifications,
-  startPeriodicNotification,
-  showNotification,
-  scheduleNotification,
-} from './notification/notificationService';
+import NotificationPermissionManager  from './permissions/NotificationPermission';
+import NotificationService from '../services/notification/notificationService';
 
 const {width} = Dimensions.get('window');
 const dynamicFontSize = width * 0.08;
@@ -51,39 +45,88 @@ const FileOperations = {
 
 const HomeScreen = ({navigation}) => {
   const [isScanning, setIsScanning] = useState(false);
+  const [hasPermission, setHasPermission] = useState(false);
 
-
-
-
-  //TODO Bildirim deneme
-
-
-
-
-
-
-
-
-  
-  // bildirim izni alma
   useEffect(() => {
-    const setupNotifications = async () => {
-      const hasPermission = await requestNotificationPermission();
-      if (hasPermission) {
-        configureNotifications();
-      }
-    };
-
-    setupNotifications();
+    checkPermissionAndStartNotifications();
   }, []);
+
+  const checkPermissionAndStartNotifications = async () => {
+    try {
+      // Bildirim izinlerini kontrol et
+      const permission = await NotificationPermissionManager.checkPermission();
+      setHasPermission(permission);
+
+      if (permission) {
+        // İzin varsa bildirimleri başlat
+        startHourlyNotifications();
+      } else {
+        // İzin yoksa kullanıcıdan iste
+        const granted = await NotificationPermissionManager.requestPermission();
+        setHasPermission(granted);
+        
+        if (granted) {
+          startHourlyNotifications();
+        } else {
+          Alert.alert(
+            'Bildirim İzni Gerekli',
+            'Uygulamanın düzgün çalışması için bildirim izni gereklidir.',
+            [{ text: 'Tamam' }]
+          );
+        }
+      }
+    } catch (error) {
+      console.error('İzin kontrolü hatası:', error);
+    }
+  };
+
+  const startHourlyNotifications = async () => {
+    try {
+      // Mevcut bildirimleri temizle
+      NotificationService.cancelAllNotifications();
+
+      // Yeni saatlik bildirimleri planla
+      NotificationService.scheduleNotification({
+        title: 'Hatırlatma',
+        message: 'Saatlik bildirim mesajı',
+        repeatType: 'minute',
+        repeatTime: 1,
+      });
+
+      console.log('Saatlik bildirimler başlatıldı');
+    } catch (error) {
+      console.error('Bildirim başlatma hatası:', error);
+    }
+  };
+  
+  const assignContactsToCities = contacts => {
+    const updatedCities = citiesData.cities.map(city => {
+      const matchedContacts = contacts.filter(
+        contact =>
+          contact.fullName &&
+          city.name &&
+          contact.fullName.toLowerCase().includes(city.name.toLowerCase())
+      );
+      return {
+        ...city,
+        people: matchedContacts,
+      };
+    });
+  
+    return updatedCities;
+  };
 
   const handleScanContacts = useCallback(async () => {
     if (isScanning) return;
-  
+
     setIsScanning(true);
     try {
       const contacts = await requestContactPermission();
-  
+      if (contacts && contacts.length > 0) {
+        const updatedCities = assignContactsToCities(contacts);
+        await FileOperations.saveUpdatedCitiesToFile(updatedCities, 'UserCities.json');
+        Alert.alert('Başarılı', 'Rehber tarandı ve kişiler eklendi.');
+      }
       if (!contacts) {
         Alert.alert(
           'İzin Gerekli',
@@ -97,47 +140,47 @@ const HomeScreen = ({navigation}) => {
         );
         return;
       }
-  
+
       // Mevcut dosyayı oku
       const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
       const fileExists = await RNFS.exists(filePath);
-      let currentCitiesData = { cities: [] };
-  
+      let citiesData = {cities: []};
+
       if (fileExists) {
         const fileContent = await RNFS.readFile(filePath, 'utf8');
-        currentCitiesData = JSON.parse(fileContent);
+        citiesData = JSON.parse(fileContent);
+      } else {
+        citiesData = {cities: []}; // Veya ilk verileri burada başlatabilirsin
       }
-  
+
       // Şehirlerle eşleştirme
-      const updatedCities = currentCitiesData.cities.map(city => {
-        // Rehberde şehirle eşleşen kişileri al
+      const updatedCities = citiesData.cities.map(city => {
         const matchedPeople = contacts.filter(
           contact =>
             contact.fullName &&
             city.name &&
             contact.fullName.toLowerCase().includes(city.name.toLowerCase()),
         );
-  
-        // Mevcut kişileri ve tarama sonuçlarını birleştir, yinelenenleri önle
+
         const mergedPeople = [
           ...city.people,
           ...matchedPeople.filter(
             newPerson =>
               !city.people.some(
-                existingPerson => existingPerson.fullName === newPerson.fullName,
+                existingPerson =>
+                  existingPerson.fullName === newPerson.fullName,
               ),
           ),
         ];
-  
-        return { ...city, people: mergedPeople };
+
+        return {...city, people: mergedPeople};
       });
-  
-      // Dosyaya kaydetme
+
       const saveSuccess = await FileOperations.saveUpdatedCitiesToFile(
         updatedCities,
         'UserCities.json',
       );
-  
+
       if (contacts.length === 0) {
         Alert.alert('Bilgi', 'Rehberinizde kayıtlı kişi bulunamadı.');
         return;
@@ -154,38 +197,9 @@ const HomeScreen = ({navigation}) => {
       setIsScanning(false);
     }
   }, [isScanning]);
-  
-
-  // Önbellek temizleme
-  const handleClearCache = useCallback(async () => {
-    try {
-      const cleared = await FileOperations.clearCache();
-      if (cleared) {
-        Alert.alert('Başarılı', 'Önbellek temizlendi.');
-      } else {
-        Alert.alert('Bilgi', 'Önbellek dosyası bulunamadı.');
-      }
-    } catch (error) {
-      Alert.alert('Hata', 'Önbellek temizlenirken bir hata oluştu.');
-    }
-  }, []);
-
-
-
-  // useEffect(() => {
-  //   showNotification();
-  // }, []);
-
-
-
 
   return (
     <View style={styles.container}>
-      {/* kaldirilacak */}
-      {/* <Button
-        title="Önbelleği Temizle"
-        onPress={handleClearCache}
-      /> */}
       <Image
         style={styles.backgroundImg}
         source={require('../images/HomeBackground.png')}
@@ -229,15 +243,6 @@ const HomeScreen = ({navigation}) => {
           />
         </View>
       </View>
-      {/* kaldirilacak */}
-      {/* <Button
-        title="Go to Tutorial"
-        onPress={() => navigation.navigate('Tutorial')}
-      />
-      <Button
-        title="TutorialBackground"
-        onPress={() => navigation.navigate('TutorialBackground')}
-      /> */}
     </View>
   );
 };

@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import { startBackgroundService, stopBackgroundService } from './src/services/backgroundService';
+import NotificationService from './src/services/notification/notificationService'
 
 import HomeScreen from './src/screens/HomeScreen';
 import TutorialScreen from './src/screens/TutorialScreen';
@@ -34,16 +34,10 @@ const App = () => {
   //   checkTutorialStatus();
   // }, []);
 
-
-  useEffect(() => {
-    // Uygulama başladığında background servisi başlat
-    startBackgroundService();
-
-    // Uygulama kapandığında servisi durdur
-    // return () => {
-    //   stopBackgroundService();
-    // };
-  }, []);
+//TODO bildirim
+useEffect(() => {
+  NotificationService.init();
+}, []);
 
 
   return (
