@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import NotificationService from './src/services/notification/notificationService'
+import { navigationRef } from './src/services/navigation/NavigationService';
 
 import HomeScreen from './src/screens/HomeScreen';
 import TutorialScreen from './src/screens/TutorialScreen';
@@ -16,7 +17,6 @@ import YourCityScreen from './src/screens/YourCityScreen';
 const Stack = createNativeStackNavigator();
 
 
-export const navigationRef = React.createRef();
 
 
 const App = () => {

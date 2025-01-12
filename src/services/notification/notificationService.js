@@ -1,11 +1,11 @@
 import PushNotification from 'react-native-push-notification';
 import { Platform } from 'react-native';
+import { NavigationService } from '../navigation/NavigationService';
 
 class NotificationService {
   static channelId = 'scheduled-channel';
   
   static init() {
-    // PushNotification'ı yapılandır
     PushNotification.configure({
       onRegister: function (token) {
         console.log('TOKEN:', token);
@@ -13,13 +13,18 @@ class NotificationService {
       
       onNotification: function (notification) {
         console.log('NOTIFICATION:', notification);
+        
+        // Bildirime tıklandığında
+        if (notification.userInteraction) {
+          // YourCityScreen'e yönlendir
+          NavigationService.navigate('YourCityScreen');
+        }
       },
 
       popInitialNotification: true,
       requestPermissions: Platform.OS === 'ios',
     });
 
-    // Android için kanal oluştur
     if (Platform.OS === 'android') {
       this.createChannel();
     }
@@ -43,8 +48,8 @@ class NotificationService {
   static scheduleNotification(options = {}) {
     PushNotification.localNotificationSchedule({
       channelId: this.channelId,
-      title: options.title || 'Bildirim',
-      message: options.message || 'Bildirim mesajı',
+      title: options.title || 'Yeni Sehir algilandi',
+      message: options.message || 'Istanbul Sehrinde X kisi mevcut.',
       date: options.date || new Date(Date.now() + 20 * 1000),
       allowWhileIdle: true,
       repeatType: options.repeatType || 'minute',
@@ -52,6 +57,11 @@ class NotificationService {
       importance: 'high',
       autoCancel: true,
       invokeApp: true,
+      // Bildirim verilerini ekle
+      userInfo: {
+        screen: 'YourCityScreen',
+        ...options.userInfo
+      }
     });
   }
 
@@ -61,3 +71,7 @@ class NotificationService {
 }
 
 export default NotificationService;
+
+
+
+//TODO flase donuyor onu kontrol et. tiklaninca yourcityscreen aciliyor
