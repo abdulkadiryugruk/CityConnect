@@ -3,18 +3,20 @@ import React, {useState, useEffect} from 'react';
 import RNFS from 'react-native-fs'; // Dosya sistemi için
 import CustomTextInput from '../../components/CustomTextInput';
 import Contacts from 'react-native-contacts'; // Rehberdeki kişileri almak için
-import {useRoute, useNavigation} from '@react-navigation/native'; // Parametre almak için
+import {useRoute, useNavigation, useIsFocused} from '@react-navigation/native'; // Parametre almak için
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const SelectContactScreen = () => {
   const route = useRoute(); // Ekrana gönderilen parametreyi al
   const navigation = useNavigation();
+  const isFocused = useIsFocused(); // Sayfanın odaklanmasını takip eder
   const [peoples, setPeoples] = useState([]); // Rehberdeki kişiler
   const [unmatchedPeoples, setUnmatchedPeoples] = useState([]); // Eşleşmeyen kişiler
   const [search, setSearch] = useState(''); // Arama metni
   const [citiesData, setCitiesData] = useState([]); // UserCities.json verisi
 
   useEffect(() => {
+    if (isFocused) {
     const loadPeopleFromFile = async () => {
       try {
         // Rehberdeki kişileri almak için izin iste
@@ -49,7 +51,8 @@ const SelectContactScreen = () => {
       }
     };
     loadPeopleFromFile();
-  }, []); // Bu useEffect sadece component mount edildiğinde çalışacak
+  }
+  }, [isFocused]); // Bu useEffect sadece component mount edildiğinde çalışacak
 
   useEffect(() => {
     // Rehberdeki kişilerle UserCities.json'daki kişileri karşılaştırarak eşleşmeyenleri ayıklıyoruz

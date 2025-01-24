@@ -184,6 +184,8 @@ const styles = StyleSheet.create({
   },
   listStyle: {
     width: '100%',
+    marginTop:'1%',
+    marginBottom:'1%'
   },
   row: {
     width: '72%',
@@ -200,6 +202,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: 'black',
+    width:'65%'
+
   },
   noResultText: {
     fontSize: 16,

@@ -236,7 +236,8 @@ const styles = StyleSheet.create({
   },
   personText: {
     fontSize: 16,
-    color:'black'
+    color:'black',
+    width:'80%'
   },
   removeButton: {
     backgroundColor: 'tomato',

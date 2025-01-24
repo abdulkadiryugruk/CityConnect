@@ -113,34 +113,40 @@ useEffect(() => {
     }
   };
   
-  const assignContactsToCities = contacts => {
-    const updatedCities = citiesData.cities.map(city => {
+  const assignContactsToCities = (contacts, citiesData) => {
+    return citiesData.cities.map(city => {
       const matchedContacts = contacts.filter(
         contact =>
           contact.fullName &&
           city.name &&
-          contact.fullName.toLowerCase().includes(city.name.toLowerCase())
+          contact.fullName.toLowerCase().includes(city.name.toLowerCase()),
       );
+  
+      // Yeni kişilerle mevcut kişileri birleştir (tekrar edenler hariç)
+      const mergedPeople = [
+        ...city.people,
+        ...matchedContacts.filter(
+          newPerson =>
+            !city.people.some(
+              existingPerson => existingPerson.fullName === newPerson.fullName,
+            ),
+        ),
+      ];
+  
       return {
         ...city,
-        people: matchedContacts,
+        people: mergedPeople,
       };
     });
-  
-    return updatedCities;
   };
-
+  
   const handleScanContacts = useCallback(async () => {
     if (isScanning) return;
-
+  
     setIsScanning(true);
     try {
+      // Rehber erişimi izni iste
       const contacts = await requestContactPermission();
-      if (contacts && contacts.length > 0) {
-        const updatedCities = assignContactsToCities(contacts);
-        await FileOperations.saveUpdatedCitiesToFile(updatedCities, 'UserCities.json');
-        Alert.alert('Başarılı', 'Rehber tarandı ve kişiler eklendi.');
-      }
       if (!contacts) {
         Alert.alert(
           'İzin Gerekli',
@@ -154,51 +160,34 @@ useEffect(() => {
         );
         return;
       }
-
-      // Mevcut dosyayı oku
-      const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
-      const fileExists = await RNFS.exists(filePath);
-      let citiesData = {cities: []};
-
-      if (fileExists) {
-        const fileContent = await RNFS.readFile(filePath, 'utf8');
-        citiesData = JSON.parse(fileContent);
-      } else {
-        citiesData = {cities: []}; // Veya ilk verileri burada başlatabilirsin
-      }
-
-      // Şehirlerle eşleştirme
-      const updatedCities = citiesData.cities.map(city => {
-        const matchedPeople = contacts.filter(
-          contact =>
-            contact.fullName &&
-            city.name &&
-            contact.fullName.toLowerCase().includes(city.name.toLowerCase()),
-        );
-
-        const mergedPeople = [
-          ...city.people,
-          ...matchedPeople.filter(
-            newPerson =>
-              !city.people.some(
-                existingPerson =>
-                  existingPerson.fullName === newPerson.fullName,
-              ),
-          ),
-        ];
-
-        return {...city, people: mergedPeople};
-      });
-
-      const saveSuccess = await FileOperations.saveUpdatedCitiesToFile(
-        updatedCities,
-        'UserCities.json',
-      );
-
+  
       if (contacts.length === 0) {
         Alert.alert('Bilgi', 'Rehberinizde kayıtlı kişi bulunamadı.');
         return;
       }
+  
+      // Mevcut JSON dosyasını oku
+      const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
+      const fileExists = await RNFS.exists(filePath);
+      let citiesData = { cities: [] };
+  
+      if (fileExists) {
+        const fileContent = await RNFS.readFile(filePath, 'utf8');
+        citiesData = JSON.parse(fileContent);
+      } else {
+        // Eğer dosya yoksa, varsayılan bir yapı başlat
+        citiesData = { cities: [] };
+      }
+  
+      // Şehirlerle kişileri eşleştir
+      const updatedCities = assignContactsToCities(contacts, citiesData);
+  
+      // Güncellenmiş şehirleri JSON dosyasına kaydet
+      const saveSuccess = await FileOperations.saveUpdatedCitiesToFile(
+        updatedCities,
+        'UserCities.json',
+      );
+  
       if (saveSuccess) {
         Alert.alert('Başarılı', 'Rehber tarandı ve kişiler eklendi.');
       } else {
@@ -211,6 +200,7 @@ useEffect(() => {
       setIsScanning(false);
     }
   }, [isScanning]);
+  
 
   return (
     <View style={styles.container}>

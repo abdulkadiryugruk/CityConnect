@@ -2,17 +2,20 @@ import {StyleSheet, Text, View, FlatList, TouchableOpacity} from 'react-native';
 import React, {useState, useEffect} from 'react';
 import CustomTextInput from '../../components/CustomTextInput';
 import RNFS from 'react-native-fs'; // Dosya sistemi için
-import {useNavigation, useRoute} from '@react-navigation/native'; // useNavigation hook'u eklendi
+import {useNavigation, useRoute, useIsFocused} from '@react-navigation/native'; // useNavigation hook'u eklendi
 import Icon from 'react-native-vector-icons/MaterialIcons'; // İkonlar için
+
 
 const ContactAndCityScreen = ({removeMatchedPerson }) => {
   const route = useRoute();
+  const isFocused = useIsFocused(); // Odaklanma kontrolü
   const {peopleName} = route.params;
   const [cities, setCities] = useState([]); // UserCities.json'dan alınacak şehirler
   const [search, setSearch] = useState(''); // Arama metni
   const navigation = useNavigation(); // navigation nesnesini hook ile alıyoruz
 
   useEffect(() => {
+    if (isFocused){
     const loadCitiesFromFile = async () => {
       try {
         const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
@@ -31,7 +34,8 @@ const ContactAndCityScreen = ({removeMatchedPerson }) => {
     };
 
     loadCitiesFromFile();
-  }, []);
+  }
+  }, [isFocused]);
 
   const filteredCities = cities.filter(
     city =>
