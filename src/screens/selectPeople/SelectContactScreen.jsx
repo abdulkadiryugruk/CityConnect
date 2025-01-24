@@ -22,9 +22,12 @@ const SelectContactScreen = () => {
         if (permission === 'authorized') {
           const contacts = await Contacts.getAll();
           // Alfabetik sıraya göre sırala
-          const sortedContacts = contacts.sort((a, b) =>
-            a.displayName.localeCompare(b.displayName),
-          );
+          const sortedContacts = contacts.sort((a, b) =>{
+            // displayName geçerli değilse, sıralama yapma
+            if (!a.displayName) return 1; 
+            if (!b.displayName) return -1;
+            return a.displayName.localeCompare(b.displayName);
+          });
           setPeoples(sortedContacts); // Sıralanmış listeyi state'e ata
         } else {
           console.log('Rehber izni verilmedi');
@@ -154,6 +157,9 @@ const styles = StyleSheet.create({
   },
   listStyle: {
     width: '100%',
+    marginTop:'1%',
+    marginBottom:'1%'
+
   },
   row: {
     flexDirection: 'row',

@@ -22,9 +22,12 @@ const CityandContactsScreen = () => {
 
           const contacts = await Contacts.getAll();
           // Alfabetik sıraya göre sırala
-          const sortedContacts = contacts.sort((a, b) =>
-            a.displayName.localeCompare(b.displayName),
-          );
+          const sortedContacts = contacts.sort((a, b) =>{
+            // displayName geçerli değilse, sıralama yapma
+            if (!a.displayName) return 1; 
+            if (!b.displayName) return -1;
+            return a.displayName.localeCompare(b.displayName);
+          });
           setPeoples(sortedContacts); // Sıralanmış listeyi state'e ata
 
 

@@ -5,9 +5,9 @@ import RNFS from 'react-native-fs'; // Dosya sistemi için
 import {useNavigation, useRoute} from '@react-navigation/native'; // useNavigation hook'u eklendi
 import Icon from 'react-native-vector-icons/MaterialIcons'; // İkonlar için
 
-const ContactAndCityScreen = () => {
+const ContactAndCityScreen = ({removeMatchedPerson }) => {
   const route = useRoute();
-  const {peopleName, removeMatchedPerson} = route.params;
+  const {peopleName} = route.params;
   const [cities, setCities] = useState([]); // UserCities.json'dan alınacak şehirler
   const [search, setSearch] = useState(''); // Arama metni
   const navigation = useNavigation(); // navigation nesnesini hook ile alıyoruz
@@ -61,7 +61,9 @@ const ContactAndCityScreen = () => {
       setCities(updatedCities);
 
       // Kişiyi eşleşmeyen kişiler listesinden çıkar
-      removeMatchedPerson(peopleName);
+      if (removeMatchedPerson) {
+        removeMatchedPerson(peopleName);
+      }
 
       // Kullanıcıyı bilgilendirme
       alert(`${peopleName}, ${city.name} şehrine eklendi!`);

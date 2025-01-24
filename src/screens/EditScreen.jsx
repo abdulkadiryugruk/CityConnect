@@ -222,6 +222,7 @@ const styles = StyleSheet.create({
   cityName: {
     fontSize: 18,
     fontWeight: 'bold',
+    color:'tomato'
   },
   personRow: {
     flexDirection: 'row',
@@ -235,6 +236,7 @@ const styles = StyleSheet.create({
   },
   personText: {
     fontSize: 16,
+    color:'black'
   },
   removeButton: {
     backgroundColor: 'tomato',

@@ -7,6 +7,7 @@ import citiesData from '../data/countries/Turkey/Cities.json';
 import {requestContactPermission} from './permissions/ContactsPermission';
 import NotificationPermissionManager  from './permissions/NotificationPermission';
 import NotificationService from '../services/notification/notificationService';
+import {requestLocationPermission  } from './permissions/LocationPermission'
 
 const {width} = Dimensions.get('window');
 const dynamicFontSize = width * 0.08;
@@ -46,10 +47,28 @@ const FileOperations = {
 const HomeScreen = ({navigation}) => {
   const [isScanning, setIsScanning] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
+//TODO IZINLER
+useEffect(() => {
+  const getPermission = async () => {
+    // Rehber izni
+    await requestContactPermission();
 
-  useEffect(() => {
-    checkPermissionAndStartNotifications();
-  }, []);
+    // Bildirim izni
+    await checkPermissionAndStartNotifications();
+
+    // Konum izni (foreground ve background için)
+    const isLocationGranted = await requestLocationPermission();
+    if (isLocationGranted) {
+      console.log("Konum izni verildi!");
+    } else {
+      Alert.alert("Uyarı", "Konum izni alınamadı.");
+    }
+  };
+
+  getPermission();
+}, []);
+
+
 
   const checkPermissionAndStartNotifications = async () => {
     try {
@@ -86,12 +105,7 @@ const HomeScreen = ({navigation}) => {
       NotificationService.cancelAllNotifications();
 
       // Yeni saatlik bildirimleri planla
-      NotificationService.scheduleNotification({
-        title: 'Hatırlatma',
-        message: 'Saatlik bildirim mesajı',
-        repeatType: 'minute',
-        repeatTime: 1,
-      });
+      NotificationService.scheduleNotification();
 
       console.log('Saatlik bildirimler başlatıldı');
     } catch (error) {
