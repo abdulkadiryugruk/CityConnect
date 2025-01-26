@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, {useState, useEffect} from 'react';
 import CustomTextInput from '../components/CustomTextInput';
-import {View, Text, TouchableOpacity, FlatList, StyleSheet} from 'react-native';
+import {View, Text, TouchableOpacity, FlatList, StyleSheet, Alert} from 'react-native';
 import RNFS from 'react-native-fs'; // Dosya işlemleri için
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons'; // İkonlar için
@@ -53,18 +53,17 @@ const EditScreen = () => {
             .includes(searchQuery?.toLowerCase() || ''),
       );
 
-      if (
-        (city.name &&
+      if (city.people.length > 0 && 
+        ((city.name &&
           city.name.toLowerCase().includes(searchQuery?.toLowerCase() || '')) ||
-        matchingPeople.length > 0
-      ) {
-        return {
-          ...city,
-          people: matchingPeople,
-        };
-      }
+        matchingPeople.length > 0)) {
+      return {
+        ...city,
+        people: matchingPeople,
+      };
+    }
 
-      return null;
+    return null;
     })
     .filter(city => city !== null);
   // null değerleri filtrele
@@ -91,6 +90,21 @@ const EditScreen = () => {
     setCities(updatedCities);
   };
 
+  const handleClearCityPeople = (cityName) => {
+    const updatedCities = cities.map(city => {
+      if (city.name === cityName) {
+        return {
+          ...city,
+          people: [], // Şehirdeki tüm kişileri sıfırla
+        };
+      }
+      return city;
+    });
+  
+    saveUpdatedCitiesToFile(updatedCities);
+    setCities(updatedCities);
+  };
+
   const saveUpdatedCitiesToFile = async updatedCities => {
     try {
       const jsonData = JSON.stringify({cities: updatedCities}, null, 2);
@@ -103,8 +117,31 @@ const EditScreen = () => {
   const CityRow = React.memo(({city}) => {
     return (
       <View style={styles.cityContainer}>
-        <TouchableOpacity onPress={() => toggleCity(city.name)}>
+        <TouchableOpacity style={styles.cityHeader}
+  onPress={() => toggleCity(city.name)}
+  onLongPress={() => {
+    Alert.alert(
+      "Şehir Kişilerini Temizle",
+      `${city.name} şehrindeki tüm kişileri silmek istiyor musunuz?`,
+      [
+        {
+          text: "İptal",
+          style: "cancel"
+        },
+        { 
+          text: "Evet", 
+          onPress: () => handleClearCityPeople(city.name) 
+        }
+      ]
+    );
+  }}
+>
           <Text style={styles.cityName}>{city.name}</Text>
+          <Icon
+    name={expandedCities[city.name] ? 'keyboard-arrow-down' : 'keyboard-arrow-left'}
+    size={24}
+    color="tomato"
+  />
         </TouchableOpacity>
         {expandedCities[city.name] && (
           <FlatList
@@ -282,5 +319,10 @@ const styles = StyleSheet.create({
     borderRadius: 85,
     borderTopLeftRadius: 0,
     paddingVertical:5,
+  },
+  cityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 });

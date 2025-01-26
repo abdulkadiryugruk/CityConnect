@@ -1,9 +1,10 @@
-import {StyleSheet, Text, View, FlatList, TouchableOpacity} from 'react-native';
+import {StyleSheet, Text, View, FlatList, TouchableOpacity, Alert, ToastAndroid} from 'react-native';
 import React, {useState, useEffect} from 'react';
 import CustomTextInput from '../../components/CustomTextInput';
 import RNFS from 'react-native-fs'; // Dosya sistemi için
 import {useNavigation, useRoute, useIsFocused} from '@react-navigation/native'; // useNavigation hook'u eklendi
 import Icon from 'react-native-vector-icons/MaterialIcons'; // İkonlar için
+
 
 
 const ContactAndCityScreen = ({removeMatchedPerson }) => {
@@ -43,39 +44,60 @@ const ContactAndCityScreen = ({removeMatchedPerson }) => {
       city.name.toLowerCase().includes(search?.toLowerCase() || '')
   );
 
-  const handleAddToPeople = async (city) => {
-    try {
-      // Seçilen kişiyi şehir objesine ekle
-      const updatedCities = cities.map((item) => {
-        if (item.name === city.name) {
-          return {
-            ...item,
-            people: [...item.people, { fullName: peopleName }],
-          };
-        }
-        return item;
-      });
+const handleAddToPeople = async (city) => {
+  Alert.alert(
+    'Kişi Ekleme',
+    `${peopleName} kişisini ${city.name} şehrine eklemek istediğinize emin misiniz?`,
+    [
+      {
+        text: 'İptal',
+        style: 'cancel',
+      },
+      {
+        text: 'Evet, Ekle',
+        onPress: async () => {
+          try {
+            const updatedCities = cities.map((item) => {
+              if (item.name === city.name) {
+                return {
+                  ...item,
+                  people: [...(item.people || []), { fullName: peopleName }],
+                };
+              }
+              return item;
+            });
 
-      // JSON dosyasını güncelle
-      const updatedData = { cities: updatedCities };
-      const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
-      await RNFS.writeFile(filePath, JSON.stringify(updatedData), 'utf8');
+            const updatedData = { cities: updatedCities };
+            const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
+            await RNFS.writeFile(filePath, JSON.stringify(updatedData), 'utf8');
 
-      // Durumu güncelle
-      setCities(updatedCities);
+            setCities(updatedCities);
 
-      // Kişiyi eşleşmeyen kişiler listesinden çıkar
-      if (removeMatchedPerson) {
-        removeMatchedPerson(peopleName);
-      }
+            if (removeMatchedPerson) {
+              removeMatchedPerson(peopleName);
+            }
 
-      // Kullanıcıyı bilgilendirme
-      alert(`${peopleName}, ${city.name} şehrine eklendi!`);
-      navigation.goBack(); // İşlem sonrası önceki ekrana dön
-    } catch (error) {
-      console.error('Kişi eklenirken hata oluştu:', error);
-    }
-  };
+            // Alert.alert(
+            //   'Kişi Eklendi ✅', 
+            //   `${peopleName}, başarıyla ${city.name} şehrine eklendi.`, 
+            //   [{ text: 'Tamam', style: 'default' }]
+            // );
+            ToastAndroid.showWithGravityAndOffset(
+              `${peopleName}, ${city.name} şehrine eklendi!`,
+              ToastAndroid.LONG,
+              ToastAndroid.BOTTOM,
+              25,
+              50
+            );
+            navigation.goBack();
+          } catch (error) {
+            console.error('Kişi eklenirken hata oluştu:', error);
+          }
+        },
+      },
+    ]
+  );
+};
 
   const renderCityItem = ({ item, index }) => (
     <View style={styles.row}>
@@ -100,7 +122,7 @@ const ContactAndCityScreen = ({removeMatchedPerson }) => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="trending-flat" size={24} color="#fff" style={{ transform: [{ rotate: '180deg' }] }}/>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Şehir Seç</Text>
+        <Text style={styles.headerTitle}>{peopleName}</Text>
         <TouchableOpacity style={styles.rightIcon}>
           <Icon name="close" size={24} color="#fff" />
         </TouchableOpacity>

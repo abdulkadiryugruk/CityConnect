@@ -1,4 +1,4 @@
-import {StyleSheet, Text, View, FlatList, TouchableOpacity} from 'react-native';
+import {StyleSheet, Text, View, FlatList, TouchableOpacity, Alert, ToastAndroid} from 'react-native';
 import React, {useState, useEffect} from 'react';
 import RNFS from 'react-native-fs'; // Dosya sistemi için
 import CustomTextInput from '../../components/CustomTextInput';
@@ -14,6 +14,7 @@ const CityandContactsScreen = () => {
   const [search, setSearch] = useState(''); // Arama metni
   const [citiesData, setCitiesData] = useState([]); // UserCities.json verisi
   const {cityName, cityId} = route.params; // Parametreleri destructuring ile alıyoruz
+  const [selectedPeoples, setSelectedPeoples] = useState([]);
 
   useEffect(() => {
     const loadPeopleFromFile = async () => {
@@ -66,6 +67,70 @@ const CityandContactsScreen = () => {
       people.displayName.toLowerCase().includes(search?.toLowerCase() || ''),
   );
 
+  const handleMultiAddToCity = async () => {
+    Alert.alert(
+      'Kişileri Ekle', 
+      `${selectedPeoples.length} kişiyi ${cityName.toUpperCase()} şehrine eklemek istediğinize emin misiniz?`,
+      [
+        {
+          text: 'İptal',
+          style: 'cancel',
+        },
+        {
+          text: 'Evet, Ekle',
+          onPress: async () => {
+            try {
+              const updatedCitiesData = citiesData.map(city => {
+                if (city.name === cityName) {
+                  return {
+                    ...city,
+                    people: [
+                      ...(city.people || []), 
+                      ...selectedPeoples.map(p => ({ fullName: p.displayName }))
+                    ],
+                  };
+                }
+                return city;
+              });
+  
+              const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
+              await RNFS.writeFile(
+                filePath,
+                JSON.stringify({cities: updatedCitiesData}),
+                'utf8'
+              );
+  
+              setUnmatchedPeoples(
+                unmatchedPeoples.filter(p => 
+                  !selectedPeoples.some(selected => selected.displayName === p.displayName)
+                )
+              );
+  
+              setCitiesData(updatedCitiesData);
+              setSelectedPeoples([]); // Seçimleri temizle
+
+              ToastAndroid.showWithGravityAndOffset(
+                `${selectedPeoples.length} kisi ${cityName.toUpperCase()} şehrine eklendi!`,
+                ToastAndroid.LONG,
+                ToastAndroid.BOTTOM,
+                25,
+                50
+              );
+            } catch (error) {
+              console.error('Çoklu ekleme hatası:', error);
+            }
+          },
+        },
+      ]
+    );
+  };
+  const toggleItemSelection = (people) => {
+    setSelectedPeoples(current => 
+      current.includes(people)
+        ? current.filter(p => p !== people)
+        : [...current, people]
+    );
+  };
   const handleAddToCity = async people => {
     try {
       // Şehirler listesine ekleme işlemi
@@ -80,13 +145,8 @@ const CityandContactsScreen = () => {
         return city;
       });
 
-      // Güncellenmiş şehirler verisini UserCities.json dosyasına kaydetme
-      const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
-      await RNFS.writeFile(
-        filePath,
-        JSON.stringify({cities: updatedCitiesData}),
-        'utf8',
-      );
+
+
 
       // Rehberdeki kişiyi eşleşen kişilerden çıkarma
       setUnmatchedPeoples(
@@ -109,10 +169,19 @@ const CityandContactsScreen = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="trending-flat" size={24} color="#fff" style={{ transform: [{ rotate: '180deg' }] }}/>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Şehir Seç</Text>
-        <TouchableOpacity style={styles.rightIcon}>
-          <Icon name="close" size={24} color="#fff" />
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{cityName.toUpperCase()}</Text>
+        {selectedPeoples.length > 0 ? (
+  <TouchableOpacity 
+    style={styles.multiAddButton} 
+    onPress={handleMultiAddToCity}
+  >
+    <Text style={styles.addButtonText}>
+      {selectedPeoples.length} Kişi Ekle
+    </Text>
+  </TouchableOpacity>
+): (
+  <View style={styles.rightIcon} />
+)}
       </View>
 
         <CustomTextInput
@@ -133,15 +202,19 @@ const CityandContactsScreen = () => {
               data={filteredUnmatchedPeoples}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({item}) => (
-                <View style={styles.row}>
+                <TouchableOpacity 
+                  style={[
+                    styles.row, 
+                    selectedPeoples.includes(item) && styles.selectedRow
+                  ]}
+                  onLongPress={() => toggleItemSelection(item)}
+                  onPress={() => toggleItemSelection(item)}
+                >
                   <Text style={styles.cityText}>{item.displayName}</Text>
-                  <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={() => handleAddToCity(item)} // Kişi eklenince listeden kaybolacak
-                  >
-                    <Text style={styles.addButtonText}>Şehre Ekle</Text>
-                  </TouchableOpacity>
-                </View>
+                  {selectedPeoples.includes(item) && (
+                    <Icon name="check-circle" size={20} color="#4CAF50" />
+                  )}
+                </TouchableOpacity>
               )}
             />
           )}
@@ -178,9 +251,8 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   rightIcon: {
-    padding: 10,
-    backgroundColor: '#42c0b8',
     borderRadius: 50,
+    padding: 25,
   },
   listStyle: {
     width: '100%',
@@ -261,5 +333,17 @@ const styles = StyleSheet.create({
     top: 0,
     borderRadius: 85,
     borderTopLeftRadius: 0,
+  },
+  selectedRow: {
+    backgroundColor: '#e0f7fa', // Seçili öğe için hafif bir arka plan rengi
+    borderColor: '#42c0b8',
+    borderWidth: 2,
+  },
+  multiAddButton: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 5,
+    marginLeft:'-10%'
+    
   },
 });

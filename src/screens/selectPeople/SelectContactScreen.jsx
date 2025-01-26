@@ -84,9 +84,7 @@ const SelectContactScreen = () => {
           <Icon name="trending-flat" size={24} color="#fff" style={{ transform: [{ rotate: '180deg' }] }}/>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Şehir Seç</Text>
-        <TouchableOpacity style={styles.rightIcon}>
-          <Icon name="close" size={24} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.rightIcon} />
       </View>
         <CustomTextInput
           placeholder={'Kişi Ara'}
@@ -154,8 +152,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   rightIcon: {
-        padding: 10,
-    backgroundColor:'#42c0b8',
+        padding: 25,
     borderRadius:50,
   },
   listStyle: {

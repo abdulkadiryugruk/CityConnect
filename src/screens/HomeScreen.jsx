@@ -189,7 +189,7 @@ useEffect(() => {
       );
   
       if (saveSuccess) {
-        Alert.alert('Başarılı', 'Rehber tarandı ve kişiler eklendi.');
+        Alert.alert('Başarılı ✅', 'Rehber tarandı ve kişiler eklendi.', [{ text: 'Tamam', style: 'default' }]);
       } else {
         Alert.alert('Hata', 'Veriler kaydedilirken bir sorun oluştu.');
       }
