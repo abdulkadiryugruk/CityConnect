@@ -45,7 +45,7 @@ const SelectCityScreen = () => {
         onPress={() =>
           navigation.navigate('CityandContactsScreen', {cityName: item.name})
         }>
-        <Text style={styles.cityText}>{item.name.toUpperCase()}</Text>
+        <Text style={styles.cityText}>{item.name.toLocaleUpperCase("tr-TR")}</Text>
       </TouchableOpacity>
     </View>
   );

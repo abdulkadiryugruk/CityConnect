@@ -178,10 +178,8 @@ const EditScreen = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="trending-flat" size={24} color="#fff" style={{ transform: [{ rotate: '180deg' }] }}/>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Şehir Seç</Text>
-        <TouchableOpacity style={styles.rightIcon}>
-          <Icon name="close" size={24} color="#fff" />
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Duzenle</Text>
+        <View style={styles.rightIcon} />
       </View>
 
       <CustomTextInput
@@ -195,13 +193,16 @@ const EditScreen = () => {
       <View style={styles.backgroundBottom}>
         <View style={styles.backgroundTopRight}></View>
         <View style={styles.body}>
-      <FlatList
-        data={filteredCities}
-        keyExtractor={(item, index) => `${item.name}-${index}`}
-        renderItem={({item}) => <CityRow city={item} />}
-        initialNumToRender={10}
-        windowSize={5}
-      />
+        {filteredCities.length === 0 ? (
+            <Text style={styles.noResultText}>Kayitli Kişi bulunamadı!</Text>
+          ) :(<FlatList
+            data={filteredCities}
+            keyExtractor={(item, index) => `${item.name}-${index}`}
+            renderItem={({item}) => <CityRow city={item} />}
+            initialNumToRender={10}
+            windowSize={5}
+          />)}
+      
       </View>
       </View>
     </View>
@@ -235,8 +236,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   rightIcon: {
-        padding: 10,
-    backgroundColor:'#42c0b8',
+        padding: 25,
     borderRadius:50,
   },
   searchBar: {
@@ -245,6 +245,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 10,
+  },
+  noResultText: {
+    fontSize: 16,
+    color: 'gray',
+    marginTop: 10,
+    textAlign: 'center',
   },
   cityContainer: {
     width:'72%',

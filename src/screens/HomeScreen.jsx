@@ -27,6 +27,24 @@ const FileOperations = {
       return false;
     }
   },
+//TODOooooooooooooooooooooooooo
+  initializeCitiesFile: async () => {
+    const filePath = `${RNFS.DocumentDirectoryPath}/UserCities.json`;
+    try {
+      const fileExists = await RNFS.exists(filePath);
+
+      if (!fileExists) {
+        // Dosya yoksa, şehir verileriyle oluştur
+        const jsonData = JSON.stringify({cities: citiesData.cities}, null, 2);
+        await RNFS.writeFile(filePath, jsonData, 'utf8');
+        console.log('UserCities.json başarıyla oluşturuldu.');
+      } else {
+        console.log('UserCities.json zaten mevcut, yeniden oluşturulmadı.');
+      }
+    } catch (error) {
+      console.error('JSON dosyası oluşturulurken hata oluştu:', error);
+    }
+  },
 
   clearCache: async () => {
     const filePath = `${RNFS.DocumentDirectoryPath}/UserCities.json`;
@@ -49,23 +67,26 @@ const HomeScreen = ({navigation}) => {
   const [hasPermission, setHasPermission] = useState(false);
 //TODO IZINLER
 useEffect(() => {
-  const getPermission = async () => {
+  const initializeApp = async () => {
+    // JSON dosyasını oluştur
+    await FileOperations.initializeCitiesFile();
+
     // Rehber izni
     await requestContactPermission();
 
     // Bildirim izni
     await checkPermissionAndStartNotifications();
 
-    // Konum izni (foreground ve background için)
+    // Konum izni
     const isLocationGranted = await requestLocationPermission();
     if (isLocationGranted) {
-      console.log("Konum izni verildi!");
+      console.log('Konum izni verildi!');
     } else {
-      Alert.alert("Uyarı", "Konum izni alınamadı.");
+      Alert.alert('Uyarı', 'Konum izni alınamadı.');
     }
   };
 
-  getPermission();
+  initializeApp();
 }, []);
 
 

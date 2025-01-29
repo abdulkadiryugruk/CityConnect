@@ -7,13 +7,22 @@ import Icon from 'react-native-vector-icons/MaterialIcons'; // İkonlar için
 
 
 
-const ContactAndCityScreen = ({removeMatchedPerson }) => {
+const ContactAndCityScreen = () => {
   const route = useRoute();
   const isFocused = useIsFocused(); // Odaklanma kontrolü
   const {peopleName} = route.params;
   const [cities, setCities] = useState([]); // UserCities.json'dan alınacak şehirler
   const [search, setSearch] = useState(''); // Arama metni
   const navigation = useNavigation(); // navigation nesnesini hook ile alıyoruz
+
+  useEffect(() => {
+    navigation.setOptions({
+      removeMatchedPerson: (name) => {
+        console.log(`${name} başarıyla kaldırıldı.`);
+        // Burada removeMatchedPerson fonksiyonunu istediğiniz gibi kullanabilirsiniz
+      },
+    });
+  }, [navigation]);
 
   useEffect(() => {
     if (isFocused){
@@ -73,9 +82,7 @@ const handleAddToPeople = async (city) => {
 
             setCities(updatedCities);
 
-            if (removeMatchedPerson) {
-              removeMatchedPerson(peopleName);
-            }
+            navigation.getParent()?.removeMatchedPerson?.(peopleName);
 
             // Alert.alert(
             //   'Kişi Eklendi ✅', 
@@ -102,7 +109,7 @@ const handleAddToPeople = async (city) => {
   const renderCityItem = ({ item, index }) => (
     <View style={styles.row}>
       <View style={styles.cityContainer}>
-        <Text style={styles.cityText}>{item.name.toUpperCase()}</Text>
+        <Text style={styles.cityText}>{item.name.toLocaleUpperCase("tr-TR")}</Text>
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => handleAddToPeople(item)} // Kişi eklenince listeden kaybolacak
@@ -147,7 +154,7 @@ const handleAddToPeople = async (city) => {
           style={styles.listStyle}
           data={filteredCities}
           renderItem={renderCityItem}
-          keyExtractor={item => item.name}
+          keyExtractor={(item, index) => index.toString()}
           initialNumToRender={11}
           removeClippedSubviews={true}
         />

@@ -70,7 +70,7 @@ const CityandContactsScreen = () => {
   const handleMultiAddToCity = async () => {
     Alert.alert(
       'Kişileri Ekle', 
-      `${selectedPeoples.length} kişiyi ${cityName.toUpperCase()} şehrine eklemek istediğinize emin misiniz?`,
+      `${selectedPeoples.length} kişiyi ${cityName.toLocaleUpperCase("tr-TR")} şehrine eklemek istediğinize emin misiniz?`,
       [
         {
           text: 'İptal',
@@ -110,7 +110,7 @@ const CityandContactsScreen = () => {
               setSelectedPeoples([]); // Seçimleri temizle
 
               ToastAndroid.showWithGravityAndOffset(
-                `${selectedPeoples.length} kisi ${cityName.toUpperCase()} şehrine eklendi!`,
+                `${selectedPeoples.length} kisi ${cityName.toLocaleUpperCase("tr-TR")} şehrine eklendi!`,
                 ToastAndroid.LONG,
                 ToastAndroid.BOTTOM,
                 25,
@@ -169,7 +169,7 @@ const CityandContactsScreen = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="trending-flat" size={24} color="#fff" style={{ transform: [{ rotate: '180deg' }] }}/>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{cityName.toUpperCase()}</Text>
+        <Text style={styles.headerTitle}>{cityName.toLocaleUpperCase("tr-TR")}</Text>
         {selectedPeoples.length > 0 ? (
   <TouchableOpacity 
     style={styles.multiAddButton} 

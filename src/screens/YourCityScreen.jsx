@@ -1,131 +1,198 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, Alert } from 'react-native';
-import RNFS from 'react-native-fs'; // Dosya işlemleri için
-import { useNavigation } from '@react-navigation/native';
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  Alert,
+} from 'react-native';
+import RNFS from 'react-native-fs';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { requestLocationPermission } from './permissions/LocationPermission';
-import Geolocation from '@react-native-community/geolocation';
+import {requestLocationPermission} from './permissions/LocationPermission';
+import NavigationService from '../services/navigation/NavigationService';
+
+const STORED_CITY_KEY = '@stored_city';
+const STORED_PEOPLE_KEY = '@stored_people';
 
 const YourCityScreen = () => {
   const [peopleList, setPeopleList] = useState([]);
-  const [currentCity, setCurrentCity] = useState("");
-  const [location, setLocation] = useState(null);
+  const [currentCity, setCurrentCity] = useState('');
+  const [personCount, setPersonCount] = useState(0);
   const navigation = useNavigation();
-  const OPENCAGE_API_KEY = "bf4aca4de1f547e1a5102b7c8e932203"; // OpenCage API anahtarınız
 
-  // İstanbul'daki kişileri yüklemek
+  // AsyncStorage'dan verileri yükleme
   useEffect(() => {
-    const loadIstanbulContacts = async () => {
-      try {
-        const path = RNFS.DocumentDirectoryPath + '/UserCities.json';
-        const fileExists = await RNFS.exists(path);
-
-        if (fileExists) {
-          const fileContent = await RNFS.readFile(path, 'utf8');
-          const jsonData = JSON.parse(fileContent);
-
-          const istanbulCity = jsonData.cities.find(city => city.name.trim() === 'Istanbul');
-          if (istanbulCity) {
-            const sortedPeople = [...istanbulCity.people].sort((a, b) =>{
-              // displayName geçerli değilse, sıralama yapma
-              if (!a.displayName) return 1; 
-              if (!b.displayName) return -1;
-              return a.displayName.localeCompare(b.displayName);
-            });
-            setPeopleList(sortedPeople);
-          } else {
-            console.log('Istanbul şehri bulunamadı!');
-          }
-        } else {
-          console.log('UserCities.json dosyası bulunamadı!');
-        }
-      } catch (error) {
-        console.error('Istanbul kişileri yüklenirken hata oluştu:', error);
-      }
-    };
-
-    loadIstanbulContacts();
+    loadStoredData();
   }, []);
 
-  // Konum izni ve şehir bilgisini alma işlemi
+  // Değişiklikleri AsyncStorage'a kaydetme
+  useEffect(() => {
+    if (currentCity) {
+      saveStoredData();
+    }
+  }, [currentCity, peopleList]);
+
+  const loadStoredData = async () => {
+    try {
+      const storedCity = await AsyncStorage.getItem(STORED_CITY_KEY);
+      const storedPeople = await AsyncStorage.getItem(STORED_PEOPLE_KEY);
+      
+      if (storedCity) {
+        setCurrentCity(storedCity);
+      }
+      
+      if (storedPeople) {
+        const parsedPeople = JSON.parse(storedPeople);
+        setPeopleList(parsedPeople);
+        setPersonCount(parsedPeople.length);
+      }
+    } catch (error) {
+      console.error('Kayıtlı veriler yüklenirken hata:', error);
+    }
+  };
+
+  const saveStoredData = async () => {
+    try {
+      await AsyncStorage.setItem(STORED_CITY_KEY, currentCity);
+      await AsyncStorage.setItem(STORED_PEOPLE_KEY, JSON.stringify(peopleList));
+    } catch (error) {
+      console.error('Veriler kaydedilirken hata:', error);
+    }
+  };
+
+  // Kişileri yükleme fonksiyonu
+  const loadCityContacts = async () => {
+    try {
+      const path = RNFS.DocumentDirectoryPath + '/UserCities.json';
+      const fileExists = await RNFS.exists(path);
+  
+      if (fileExists) {
+        const fileContent = await RNFS.readFile(path, 'utf8');
+        const jsonData = JSON.parse(fileContent);
+        const cityData = jsonData.cities.find(city => city.name.trim() === currentCity);
+        const count = cityData ? cityData.people.length : 0;
+        setPersonCount(count);
+  
+        if (cityData) {
+          const sortedPeople = [...cityData.people].sort((a, b) => 
+            (a.displayName || '').localeCompare(b.displayName || '')
+          );
+          setPeopleList(sortedPeople);
+        }
+      }
+    } catch (error) {
+      console.error('Kişiler yüklenirken hata:', error);
+    }
+  };
+
+  // Şehir değiştiğinde kişileri yükle
+  useEffect(() => {
+    if (currentCity) {
+      loadCityContacts();
+    }
+  }, [currentCity]);
+
+  // Konum izni ve şehir bilgisini alma
   const handleButtonClick = async () => {
-    const hasPermission = await requestLocationPermission(); // Konum izni kontrolü
+    const hasPermission = await requestLocationPermission();
     if (!hasPermission) {
-      Alert.alert("İzin Reddedildi", "Konum izni verilmediği için işlem gerçekleştirilemiyor.");
+      Alert.alert(
+        'İzin Reddedildi',
+        'Konum izni verilmediği için işlem gerçekleştirilemiyor.',
+      );
       return;
     }
-
-    // Konum alındıktan sonra şehir bilgisini almak
-    await getLocation(); // location state'ini güncelle
+    await getLocation();
   };
 
-  // Kullanıcıdan konum alma
+  // NavigationService üzerinden konum alma
   const getLocation = async () => {
-    const hasPermission = await requestLocationPermission();
-    if (!hasPermission) return;
-
-    Geolocation.getCurrentPosition(
-      async (position) => {
-        setLocation(position.coords);
-        const response = await fetch(
-          `https://api.opencagedata.com/geocode/v1/json?q=${position.coords.latitude}+${position.coords.longitude}&key=${OPENCAGE_API_KEY}`
-        );
-        const data = await response.json();
-        if (data && data.results && data.results.length > 0) {
-          const city = data.results[0].components.city || "Şehir bulunamadı";
-          setCurrentCity(city); // Şehir bilgisi durumu güncelleniyor
-        } else {
-          Alert.alert("Hata", "Şehir bilgisi alınamadı.");
-        }
-      },
-      (error) => {
-        console.error(error);
-        Alert.alert('Konum alınamadı', error.message);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-    );
+    try {
+      const city = await NavigationService.getCityFromLocation();
+      if (city) {
+        setCurrentCity(city);
+      }
+    } catch (error) {
+      Alert.alert(
+        'Konum alınamadı', 
+        'Lütfen konumunuzun açık olduğundan emin olunuz ve izinlerinizi kontrol ediniz'
+      );
+    }
   };
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({item}) => (
     <View style={styles.listItem}>
       <Text style={styles.listItemText}>
-        {typeof item === 'string' ? item : item.fullName || JSON.stringify(item)}
+        {typeof item === 'string'
+          ? item
+          : item.fullName || JSON.stringify(item)}
       </Text>
     </View>
   );
+
+  const clearStoredData = async () => {
+    try {
+      await AsyncStorage.removeItem(STORED_CITY_KEY);
+      await AsyncStorage.removeItem(STORED_PEOPLE_KEY);
+      setCurrentCity('');
+      setPeopleList([]);
+      setPersonCount(0);
+      Alert.alert('Başarılı', 'Kayıtlı veriler temizlendi');
+    } catch (error) {
+      console.error('Veriler temizlenirken hata:', error);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.backgroundTop}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Icon name="trending-flat" size={24} color="#fff" style={{ transform: [{ rotate: '180deg' }] }} />
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}>
+            <Icon
+              name="trending-flat"
+              size={24}
+              color="#fff"
+              style={{transform: [{rotate: '180deg'}]}}
+            />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Istanbul'daki Kişiler</Text>
-          <TouchableOpacity style={styles.rightIcon}>
-            <Icon name="close" size={24} color="#fff" />
+          <Text style={styles.headerTitle}>{currentCity} Kişileri</Text>
+          <TouchableOpacity 
+            onPress={clearStoredData}
+            style={styles.clearButton}>
+            <Icon name="delete" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
       <View style={styles.backgroundBottom}>
         <View style={styles.backgroundTopRight}></View>
         <View style={styles.body}>
-          <FlatList
-            data={peopleList}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={renderItem}
-          />
+          {personCount === 0 ? (
+            <Text style={styles.noResultText}>Kişi bulunamadı!</Text>
+          ) : (
+            <FlatList
+              data={peopleList}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={renderItem}
+            />
+          )}
+
           <TouchableOpacity style={styles.button} onPress={handleButtonClick}>
             <Text style={styles.buttonText}>Şehri Göster</Text>
           </TouchableOpacity>
           <Text style={styles.selectedCityText}>
-            Şu anki konum: {currentCity || "Henüz bir şehir seçilmedi"}
+            Şu anki konum: {currentCity || 'Henüz bir şehir seçilmedi'}
           </Text>
         </View>
       </View>
     </View>
   );
 };
+
 
 export default YourCityScreen;
 
@@ -154,6 +221,10 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   rightIcon: {
+    padding: 25,
+    borderRadius: 50,
+  },
+  clearButton: {
     padding: 10,
     backgroundColor: '#42c0b8',
     borderRadius: 50,
@@ -190,6 +261,12 @@ const styles = StyleSheet.create({
     top: 0,
     borderRadius: 85,
     borderTopLeftRadius: 0,
+  },
+  noResultText: {
+    fontSize: 16,
+    color: 'gray',
+    marginTop: 10,
+    textAlign: 'center',
   },
   listItem: {
     width: '100%',
