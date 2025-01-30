@@ -3,8 +3,6 @@ import Geolocation from '@react-native-community/geolocation';
 
 export const navigationRef = createRef();
 
-const OPENCAGE_API_KEY = "bf4aca4de1f547e1a5102b7c8e932203";
-
 class NavigationService {
   static navigate(name, params) {
     navigationRef.current?.navigate(name, params);
@@ -17,17 +15,23 @@ class NavigationService {
           async (position) => {
             try {
               const { latitude, longitude } = position.coords;
+
+              // Photon API
               const response = await fetch(
-                `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${OPENCAGE_API_KEY}`
+                `https://photon.komoot.io/reverse?lat=${latitude}&lon=${longitude}`
               );
               const data = await response.json();
+
+              // Şehir bilgisini
               const city =
-                data.results[0]?.components.city ||
-                data.results[0]?.components.town ||
+                data.features[0]?.properties.state ||
+                //FIXME Ilce isimleri eklendiginde guncellenecek
+                data.features[0]?.properties.city ||
                 'Bilinmeyen Şehir';
+
               resolve(city);
             } catch (error) {
-              console.error("OpenCage API hatası:", error);
+              console.error("Photon API hatası:", error);
               retryFetchLocation(error);
             }
           },
