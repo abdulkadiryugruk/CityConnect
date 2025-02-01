@@ -38,9 +38,6 @@ const App = () => {
 
   useEffect(() => {
     NotificationService.init();
-    if (Platform.OS === 'android') {
-      WorkManagerModule.scheduleWork();
-    }
     const subscription = eventEmitter.addListener('locationCheck', (event) => {
       NotificationService.handleBackgroundTask(event);
     });

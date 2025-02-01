@@ -8,11 +8,10 @@ const { WorkManagerModule } = NativeModules;
 const eventEmitter = new NativeEventEmitter(WorkManagerModule);
 
 const LAST_CITY_KEY = '@last_visited_city';
-const LOCATION_CHECK_INTERVAL = 1 * 60 * 1000; // 1 dakika
 
 class NotificationService {
   static channelId = 'scheduled-channel';
-  static locationCheckTimer = null;
+  static isWorkManagerStarted = false;
 
   static handleBackgroundTask(event) {
     if (event.type === 'LOCATION_CHECK') {
@@ -21,7 +20,18 @@ class NotificationService {
   }
 
   static init() {
-    // Uygulama kapalıyken bildirimleri yönetmek için
+    // WorkManager'ı başlat
+    if (Platform.OS === 'android') {
+      WorkManagerModule.startBackgroundService((error, result) => {
+          if (error) {
+              console.error('WorkManager başlatılırken hata:', error);
+          } else {
+              console.log('WorkManager başarıyla başlatıldı:', result);
+          }
+      });
+  }
+
+    // Push Notification konfigürasyonu
     PushNotification.configure({
       onRegister: function (token) {
         console.log('TOKEN:', token);
@@ -30,36 +40,18 @@ class NotificationService {
       onNotification: (notification) => {
         console.log('NOTIFICATION:', notification);
 
-        // Bildirime tıklandığında
-        if (notification.userInteraction) {
-          // Uygulama kapalıyken bildirime tıklanırsa
-          if (!notification.foreground) {
-            // Uygulamayı başlat ve ekrana git
-            NavigationService.navigate('YourCityScreen');
-          }
+        if (notification.userInteraction && !notification.foreground) {
+          NavigationService.navigate('YourCityScreen');
         }
-
-        // // iOS için gerekli
-        // notification.finish(PushNotification.FetchResult.NoData);
       },
 
-      // Uygulama kapalıyken alınan bildirimleri göster
       popInitialNotification: true,
-
-      // iOS için izinler
       permissions: {
         alert: true,
         badge: true,
         sound: true,
       },
-
-      // Android için
       requestPermissions: Platform.OS === 'ios',
-
-      // Uygulama kapalıyken bildirimleri göster
-      popInitialNotification: true,
-
-      // Bildirim önceliği
       priority: 'high',
     });
 
@@ -67,11 +59,37 @@ class NotificationService {
       this.createChannel();
     }
 
-    // Broadcast'i dinle
+    // Broadcast dinleyicisi
     eventEmitter.addListener('locationCheck', (event) => {
       this.handleBackgroundTask(event);
     });
   }
+
+  static startWorkManager() {
+    if (!this.isWorkManagerStarted) {
+      WorkManagerModule.startBackgroundService((error, result) => {
+        if (error) {
+          console.error('WorkManager başlatılırken hata:', error);
+        } else {
+          console.log('WorkManager başarıyla başlatıldı:', result);
+          this.isWorkManagerStarted = true;
+        }
+      });
+    }
+  }
+
+  // static stopWorkManager() {
+  //   if (this.isWorkManagerStarted) {
+  //     WorkManagerModule.stopBackgroundService((error, result) => {
+  //       if (error) {
+  //         console.error('WorkManager durdurulurken hata:', error);
+  //       } else {
+  //         console.log('WorkManager başarıyla durduruldu:', result);
+  //         this.isWorkManagerStarted = false;
+  //       }
+  //     });
+  //   }
+  // }
 
   static createChannel() {
     if (Platform.OS === 'android') {
@@ -84,7 +102,7 @@ class NotificationService {
               channelDescription: 'Saatlik bildirimler için kanal',
               playSound: true,
               soundName: 'default',
-              importance: 4, // Yüksek önem
+              importance: 4,
               vibrate: true,
             },
             (created) => console.log(`Kanal oluşturuldu: ${created ? 'Başarılı' : 'Başarısız'}`)
@@ -117,24 +135,24 @@ class NotificationService {
         if (personCount === 0) {
           console.log(`${currentCity} şehrinde kimse yok. Bildirim gönderilmeyecek.`);
           return;
-        } else {
-          PushNotification.localNotificationSchedule({
-            channelId: this.channelId,
-            title: options.title || 'Yeni Şehir Algılandı',
-            message: `${currentCity} Şehrinde ${personCount} kişi mevcut.`,
-            date: options.date || new Date(Date.now() + 1 * 1000),
-            allowWhileIdle: true,
-            importance: 'high',
-            autoCancel: true,
-            invokeApp: true,
-            userInfo: {
-              screen: 'YourCityScreen',
-              ...options.userInfo,
-            },
-          });
-
-          console.log('Bildirim gönderildi.');
         }
+
+        PushNotification.localNotificationSchedule({
+          channelId: this.channelId,
+          title: options.title || 'Yeni Şehir Algılandı',
+          message: `${currentCity} Şehrinde ${personCount} kişi mevcut.`,
+          date: options.date || new Date(Date.now() + 1 * 1000),
+          allowWhileIdle: true,
+          importance: 'high',
+          autoCancel: true,
+          invokeApp: true,
+          userInfo: {
+            screen: 'YourCityScreen',
+            ...options.userInfo,
+          },
+        });
+
+        console.log('Bildirim gönderildi.');
       } else {
         console.error('UserCities.json dosyası bulunamadı.');
       }
@@ -143,9 +161,9 @@ class NotificationService {
     }
   }
 
-  static cancelAllNotifications() {
-    PushNotification.cancelAllLocalNotifications();
-  }
+   static cancelAllNotifications() {
+     PushNotification.cancelAllLocalNotifications();
+   }
 }
 
 export default NotificationService;
