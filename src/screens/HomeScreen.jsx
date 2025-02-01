@@ -9,6 +9,7 @@ import NotificationPermissionManager  from './permissions/NotificationPermission
 import NotificationService from '../services/notification/notificationService';
 import {requestLocationPermission  } from './permissions/LocationPermission'
 
+
 const {width} = Dimensions.get('window');
 const dynamicFontSize = width * 0.08;
 
@@ -67,6 +68,7 @@ const HomeScreen = ({navigation}) => {
   const [hasPermission, setHasPermission] = useState(false);
 //TODO IZINLER
 useEffect(() => {
+
   const initializeApp = async () => {
     // JSON dosyasını oluştur
     await FileOperations.initializeCitiesFile();

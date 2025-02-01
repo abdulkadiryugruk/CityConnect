@@ -75,15 +75,15 @@ def enableProguardInReleaseBuilds = false
 def jscFlavor = 'org.webkit:android-jsc:+' // Ensure this uses AndroidX version
 
 android {
-    ndkVersion "26.1.10909125" // NDK sürümünüz burada tanımlandı
-    compileSdk 33// Güncel bir build tools sürümü kullanın
+     ndkVersion "26.1.10909125"  // NDK sürümünüz burada tanımlandı
+    compileSdk 35// Güncel bir build tools sürümü kullanın
     // Projeye uygun SDK sürümünü belirleyin
 
     namespace "com.denemee"
     defaultConfig {
         applicationId "com.denemee"
         minSdkVersion 24 // İhtiyacınıza göre ayarlayın
-        targetSdkVersion 33 // Güncel olmasını öneririm
+        targetSdkVersion 35 // Güncel olmasını öneririm
         versionCode 1
         versionName "1.0"
     }
@@ -123,4 +123,9 @@ dependencies {
     // Remove legacy support libraries and use AndroidX dependencies
     // Example: androidx.core
     implementation 'androidx.core:core:1.10.0' // Ensure this uses AndroidX version
+
+      // WorkManager için
+    implementation "androidx.work:work-runtime-ktx:2.8.1"
+    implementation "androidx.work:work-runtime:2.8.1"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 }

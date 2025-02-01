@@ -8,11 +8,9 @@ const { WorkManagerModule } = NativeModules;
 const eventEmitter = new NativeEventEmitter(WorkManagerModule);
 
 const LAST_CITY_KEY = '@last_visited_city';
-const LOCATION_CHECK_INTERVAL = 1 * 60 * 1000; // 1 dakika
 
 class NotificationService {
   static channelId = 'scheduled-channel';
-  static locationCheckTimer = null;
 
   static handleBackgroundTask(event) {
     if (event.type === 'LOCATION_CHECK') {
@@ -38,9 +36,6 @@ class NotificationService {
             NavigationService.navigate('YourCityScreen');
           }
         }
-
-        // // iOS için gerekli
-        // notification.finish(PushNotification.FetchResult.NoData);
       },
 
       // Uygulama kapalıyken alınan bildirimleri göster
@@ -55,9 +50,6 @@ class NotificationService {
 
       // Android için
       requestPermissions: Platform.OS === 'ios',
-
-      // Uygulama kapalıyken bildirimleri göster
-      popInitialNotification: true,
 
       // Bildirim önceliği
       priority: 'high',
@@ -118,22 +110,32 @@ class NotificationService {
           console.log(`${currentCity} şehrinde kimse yok. Bildirim gönderilmeyecek.`);
           return;
         } else {
-          PushNotification.localNotificationSchedule({
-            channelId: this.channelId,
-            title: options.title || 'Yeni Şehir Algılandı',
-            message: `${currentCity} Şehrinde ${personCount} kişi mevcut.`,
-            date: options.date || new Date(Date.now() + 1 * 1000),
-            allowWhileIdle: true,
-            importance: 'high',
-            autoCancel: true,
-            invokeApp: true,
-            userInfo: {
-              screen: 'YourCityScreen',
-              ...options.userInfo,
-            },
-          });
+          const lastCity = await this.getLastCity();
 
-          console.log('Bildirim gönderildi.');
+          if (lastCity === currentCity) {
+            console.log(`Şehir önceki şehir ile aynı. Bildirim gönderilmeyecek.`);
+            return; // Bildirim göndermeyi burada durduruyoruz.
+          } else {
+            await this.setLastCity(currentCity);
+            console.log(`Son şehir güncellendi: ${currentCity}`);
+
+            PushNotification.localNotificationSchedule({
+              channelId: this.channelId,
+              title: options.title || 'Yeni Şehir Algılandı',
+              message: `${currentCity} Şehrinde ${personCount} kişi mevcut.`,
+              date: options.date || new Date(Date.now() + 1 * 1000),
+              allowWhileIdle: true,
+              importance: 'high',
+              autoCancel: true,
+              invokeApp: true,
+              userInfo: {
+                screen: 'YourCityScreen',
+                ...options.userInfo,
+              },
+            });
+
+            console.log('Bildirim gönderildi.');
+          }
         }
       } else {
         console.error('UserCities.json dosyası bulunamadı.');
@@ -145,6 +147,24 @@ class NotificationService {
 
   static cancelAllNotifications() {
     PushNotification.cancelAllLocalNotifications();
+  }
+
+  static async getLastCity() {
+    try {
+      const lastCity = await AsyncStorage.getItem(LAST_CITY_KEY);
+      return lastCity;
+    } catch (error) {
+      console.error('Son şehir alınırken hata oluştu:', error);
+      return null;
+    }
+  }
+
+  static async setLastCity(city) {
+    try {
+      await AsyncStorage.setItem(LAST_CITY_KEY, city);
+    } catch (error) {
+      console.error('Son şehir kaydedilirken hata oluştu:', error);
+    }
   }
 }
 
