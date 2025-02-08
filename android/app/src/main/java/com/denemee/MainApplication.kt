@@ -11,6 +11,8 @@ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.facebook.soloader.SoLoader
+import android.util.Log
+
 
 import android.location.LocationManager
 import android.content.Context
@@ -51,10 +53,10 @@ class MainApplication : Application(), ReactApplication {
             .build()
 
         // Kişi sayısı kontrol worker'ı
-        val cityCheckWorkRequest = PeriodicWorkRequestBuilder<CityCheckWorker>(15, TimeUnit.MINUTES)
-            .setConstraints(constraints)
-            .setInitialDelay(2, TimeUnit.MINUTES)  // 2 dakika gecikmeyle başla
-            .build()
+        // val cityCheckWorkRequest = PeriodicWorkRequestBuilder<CityCheckWorker>(15, TimeUnit.MINUTES)
+        //     .setConstraints(constraints)
+        //     .setInitialDelay(2, TimeUnit.MINUTES)  // 2 dakika gecikmeyle başla
+        //     .build()
 
         val workManager = WorkManager.getInstance(applicationContext)
 
@@ -65,11 +67,11 @@ class MainApplication : Application(), ReactApplication {
             gpsCheckWorkRequest
         )
 
-        workManager.enqueueUniquePeriodicWork(
-            CityCheckWorker.WORK_NAME,
-            ExistingPeriodicWorkPolicy.REPLACE,
-            cityCheckWorkRequest
-        )
+        // workManager.enqueueUniquePeriodicWork(
+        //     CityCheckWorker.WORK_NAME,
+        //     ExistingPeriodicWorkPolicy.REPLACE,
+        //     cityCheckWorkRequest
+        // )
     }
 
     override fun onCreate() {
@@ -79,7 +81,7 @@ class MainApplication : Application(), ReactApplication {
             load()
         }
 
-        // Tüm worker'ları tek bir fonksiyonda başlat
+        // Tüm workeri calistir
         setupWorkers()
     }
 }

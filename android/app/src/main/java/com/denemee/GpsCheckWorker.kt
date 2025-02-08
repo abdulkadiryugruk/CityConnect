@@ -4,11 +4,14 @@ import android.content.Context
 import android.location.LocationManager
 import androidx.work.*
 import java.util.concurrent.TimeUnit
+import android.util.Log
+
 
 class GpsCheckWorker(context: Context, workerParams: WorkerParameters) : Worker(context, workerParams) {
     
     companion object {
         const val WORK_NAME = "gps_check_worker"
+        const val TAG = "GpsCheckWorker"
     }
 
     private fun isGpsEnabled(context: Context): Boolean {
@@ -16,35 +19,39 @@ class GpsCheckWorker(context: Context, workerParams: WorkerParameters) : Worker(
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
     }
 
-    override fun doWork(): Result {
-        val isGpsEnabled = isGpsEnabled(applicationContext)
-        
-        if (isGpsEnabled) {
-            // GPS açıksa, bildirim worker'ını başlat
-            startNotificationWorker()
-        } else {
-            // GPS kapalıysa, bildirim worker'ını durdur
-            WorkManager.getInstance(applicationContext)
-                .cancelUniqueWork(NotificationWorker.WORK_NAME)
-        }
+override fun doWork(): Result {
+    val isGpsEnabled = isGpsEnabled(applicationContext)
+    
+    if (isGpsEnabled) {
+        // GPS açıksa, CityCheckWorker'ı başlat
+        startCityCheckWorker()
+        Log.d(TAG, "GPS ACIK oldugu icin GpsCheckWorker icerisinde CityCheckWorker calisti")
+    } else {
+        // GPS kapalıysa, bildirim worker'ını durdur
+        WorkManager.getInstance(applicationContext)
+            .cancelUniqueWork(CityCheckWorker.WORK_NAME)
+        Log.d(TAG, "GPS KAPALI oldugu icin GpsCheckWorker icerisinde CityCheckWorker calismadi")
 
-        return Result.success()
     }
 
-    private fun startNotificationWorker() {
-        val constraints = Constraints.Builder()
-            .setRequiresDeviceIdle(false)
-            .setRequiresCharging(false)
-            .build()
+    return Result.success()
+}
 
-        val notificationWorkRequest = PeriodicWorkRequestBuilder<NotificationWorker>(15, TimeUnit.MINUTES)
-            .setConstraints(constraints)
-            .build()
+private fun startCityCheckWorker() {
+    val constraints = Constraints.Builder()
+        .setRequiresDeviceIdle(false)
+        .setRequiresCharging(false)
+        .build()
 
-        WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
-            NotificationWorker.WORK_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,  // Eğer çalışıyorsa devam etsin
-            notificationWorkRequest
+    val cityCheckWorkRequest = OneTimeWorkRequestBuilder<CityCheckWorker>()
+        .setConstraints(constraints)
+        .build()
+
+    WorkManager.getInstance(applicationContext)
+        .enqueueUniqueWork(
+            CityCheckWorker.WORK_NAME,
+            ExistingWorkPolicy.KEEP,  // Eğer çalışıyorsa yenisiyle değiştir
+            cityCheckWorkRequest
         )
-    }
+}
 }
