@@ -1,7 +1,7 @@
-import React, {useEffect, useState} from 'react';
-import {NavigationContainer} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import NotificationService from './src/services/notification/notificationService'
+import React, { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import NotificationService from './src/services/notification/notificationService';
 import { navigationRef } from './src/services/navigation/NavigationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform, NativeEventEmitter, NativeModules } from 'react-native';
@@ -16,8 +16,8 @@ import ContactAndCityScreen from './src/screens/selectPeople/ContactAndCityScree
 import TutorialBackground from './src/screens/TutorialBackground';
 import YourCityScreen from './src/screens/YourCityScreen';
 
-const { WorkManagerModule } = NativeModules;
-const eventEmitter = new NativeEventEmitter(WorkManagerModule);
+
+
 
 const Stack = createNativeStackNavigator();
 
@@ -36,20 +36,16 @@ const App = () => {
     checkTutorialStatus();
   }, []);
 
-  useEffect(() => {
-    NotificationService.init();
-    const subscription = eventEmitter.addListener('locationCheck', (event) => {
-      NotificationService.handleBackgroundTask(event);
-    });
-    return () => {
-      subscription.remove();
-    };
-  }, []);
+  // useEffect(() => {
+  //   NotificationService.init();
+
+
+  // }, []);
 
   const handleTutorialComplete = async () => {
     await AsyncStorage.setItem('tutorialShown', 'true');
-    setIsTutorialShown(true);
-  };
+    setIsTutorialShown(true)
+  }
 
   return (
     <NavigationContainer ref={navigationRef}>
@@ -107,4 +103,4 @@ const App = () => {
   );
 };
 
-export default App
+export default App;

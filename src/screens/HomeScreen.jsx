@@ -6,9 +6,8 @@ import RNFS from 'react-native-fs';
 import citiesData from '../data/countries/Turkey/Cities.json';
 import {requestContactPermission} from './permissions/ContactsPermission';
 import NotificationPermissionManager  from './permissions/NotificationPermission';
-import NotificationService from '../services/notification/notificationService';
-import {requestLocationPermission  } from './permissions/LocationPermission'
-
+// import NotificationService from '../services/notification/notificationService';
+import {requestLocationPermission} from './permissions/LocationPermission';
 
 const {width} = Dimensions.get('window');
 const dynamicFontSize = width * 0.08;
@@ -25,10 +24,10 @@ const FileOperations = {
       return true;
     } catch (error) {
       console.error(`${fileName} dosyasına yazılamadı:`, error);
+      // NotificationService.sendNotification("Hata", `${fileName} dosyasına yazılamadı.`); // Kullanıcıya bildirim gönder
       return false;
     }
   },
-//TODOooooooooooooooooooooooooo
   initializeCitiesFile: async () => {
     const filePath = `${RNFS.DocumentDirectoryPath}/UserCities.json`;
     try {
@@ -44,6 +43,7 @@ const FileOperations = {
       }
     } catch (error) {
       console.error('JSON dosyası oluşturulurken hata oluştu:', error);
+      // NotificationService.sendNotification("Hata", "JSON dosyası oluşturulurken hata oluştu."); // Kullanıcıya bildirim gönder
     }
   },
 
@@ -58,6 +58,7 @@ const FileOperations = {
       return false;
     } catch (error) {
       console.error('Önbellek temizlenirken hata oluştu:', error);
+      // NotificationService.sendNotification("Hata", "Önbellek temizlenirken hata oluştu."); // Kullanıcıya bildirim gönder
       throw error;
     }
   },
@@ -66,44 +67,32 @@ const FileOperations = {
 const HomeScreen = ({navigation}) => {
   const [isScanning, setIsScanning] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
-//TODO IZINLER
-useEffect(() => {
 
-  const initializeApp = async () => {
-    // JSON dosyasını oluştur
-    await FileOperations.initializeCitiesFile();
+  useEffect(() => {
+    const initializeApp = async () => {
+      await FileOperations.initializeCitiesFile();
+      await requestContactPermission();
+      await checkPermissionAndStartNotifications();
+      const isLocationGranted = await requestLocationPermission();
+      if (isLocationGranted) {
+        console.log('Konum izni verildi!');
+      } else {
+        Alert.alert('Uyarı', 'Konum izni alınamadı.');
+        // NotificationService.sendNotification("Hata", "Konum izni alınamadı."); // Kullanıcıya bildirim gönder
+      }
+    };
 
-    // Rehber izni
-    await requestContactPermission();
-
-    // Bildirim izni
-    await checkPermissionAndStartNotifications();
-
-    // Konum izni
-    const isLocationGranted = await requestLocationPermission();
-    if (isLocationGranted) {
-      console.log('Konum izni verildi!');
-    } else {
-      Alert.alert('Uyarı', 'Konum izni alınamadı.');
-    }
-  };
-
-  initializeApp();
-}, []);
-
-
+    initializeApp();
+  }, []);
 
   const checkPermissionAndStartNotifications = async () => {
     try {
-      // Bildirim izinlerini kontrol et
       const permission = await NotificationPermissionManager.checkPermission();
       setHasPermission(permission);
 
       if (permission) {
-        // İzin varsa bildirimleri başlat
         startHourlyNotifications();
       } else {
-        // İzin yoksa kullanıcıdan iste
         const granted = await NotificationPermissionManager.requestPermission();
         setHasPermission(granted);
         
@@ -115,27 +104,26 @@ useEffect(() => {
             'Uygulamanın düzgün çalışması için bildirim izni gereklidir.',
             [{ text: 'Tamam' }]
           );
+          // NotificationService.sendNotification("Hata", "Bildirim izni gereklidir."); // Kullanıcıya bildirim gönder
         }
       }
     } catch (error) {
       console.error('İzin kontrolü hatası:', error);
+      // NotificationService.sendNotification("Hata", "İzin kontrolü hatası."); // Kullanıcıya bildirim gönder
     }
   };
 
   const startHourlyNotifications = async () => {
     try {
-      // Mevcut bildirimleri temizle
-      NotificationService.cancelAllNotifications();
-
-      // Yeni saatlik bildirimleri planla
-      NotificationService.scheduleNotification();
-
+      // NotificationService.cancelAllNotifications();
+      // NotificationService.scheduleNotification();
       console.log('Saatlik bildirimler başlatıldı');
     } catch (error) {
       console.error('Bildirim başlatma hatası:', error);
+      // NotificationService.sendNotification("Hata", "Bildirim başlatma hatası."); // Kullanıcıya bildirim gönder
     }
   };
-  
+
   const assignContactsToCities = (contacts, citiesData) => {
     return citiesData.cities.map(city => {
       const matchedContacts = contacts.filter(
@@ -144,8 +132,7 @@ useEffect(() => {
           city.name &&
           contact.fullName.toLowerCase().includes(city.name.toLowerCase()),
       );
-  
-      // Yeni kişilerle mevcut kişileri birleştir (tekrar edenler hariç)
+
       const mergedPeople = [
         ...city.people,
         ...matchedContacts.filter(
@@ -155,20 +142,19 @@ useEffect(() => {
             ),
         ),
       ];
-  
+
       return {
         ...city,
         people: mergedPeople,
       };
     });
   };
-  
+
   const handleScanContacts = useCallback(async () => {
     if (isScanning) return;
-  
+
     setIsScanning(true);
     try {
-      // Rehber erişimi izni iste
       const contacts = await requestContactPermission();
       if (!contacts) {
         Alert.alert(
@@ -183,34 +169,29 @@ useEffect(() => {
         );
         return;
       }
-  
+
       if (contacts.length === 0) {
         Alert.alert('Bilgi', 'Rehberinizde kayıtlı kişi bulunamadı.');
         return;
       }
-  
-      // Mevcut JSON dosyasını oku
+
       const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
       const fileExists = await RNFS.exists(filePath);
       let citiesData = { cities: [] };
-  
+
       if (fileExists) {
         const fileContent = await RNFS.readFile(filePath, 'utf8');
         citiesData = JSON.parse(fileContent);
       } else {
-        // Eğer dosya yoksa, varsayılan bir yapı başlat
         citiesData = { cities: [] };
       }
-  
-      // Şehirlerle kişileri eşleştir
+
       const updatedCities = assignContactsToCities(contacts, citiesData);
-  
-      // Güncellenmiş şehirleri JSON dosyasına kaydet
       const saveSuccess = await FileOperations.saveUpdatedCitiesToFile(
         updatedCities,
         'UserCities.json',
       );
-  
+
       if (saveSuccess) {
         Alert.alert('Başarılı ✅', 'Rehber tarandı ve kişiler eklendi.', [{ text: 'Tamam', style: 'default' }]);
       } else {
@@ -219,11 +200,11 @@ useEffect(() => {
     } catch (error) {
       console.error('Rehber tarama sırasında hata oluştu:', error);
       Alert.alert('Hata', 'Bir sorun oluştu, lütfen tekrar deneyin.');
+      // NotificationService.sendNotification("Hata", "Rehber tarama sırasında hata oluştu."); // Kullanıcıya bildirim gönder
     } finally {
       setIsScanning(false);
     }
   }, [isScanning]);
-  
 
   return (
     <View style={styles.container}>
@@ -239,7 +220,6 @@ useEffect(() => {
             pressed={handleScanContacts}
             disabled={isScanning}
           />
-
           <View style={styles.manuelAddContainer}>
             <View style={styles.manuelAddLabel}>
               <Text style={styles.labelText}>Manuel Ekleme</Text>
@@ -259,7 +239,6 @@ useEffect(() => {
               />
             </View>
           </View>
-
           <CustomButton
             buttonText="Düzenle"
             pressed={() => navigation.navigate('EditScreen')}

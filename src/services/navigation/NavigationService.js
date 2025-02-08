@@ -4,62 +4,59 @@ import Geolocation from '@react-native-community/geolocation';
 export const navigationRef = createRef();
 
 class NavigationService {
-  static navigate(name, params) {
-    navigationRef.current?.navigate(name, params);
-  }
+    static navigate(name, params) {
+        navigationRef.current?.navigate(name, params);
+    }
 
-  static async getCityFromLocation() {
-    return new Promise((resolve, reject) => {
-      const attemptFetchLocation = () => {
-        Geolocation.getCurrentPosition(
-          async (position) => {
-            try {
-              const { latitude, longitude } = position.coords;
+    static async getCityFromLocation() {
+        return new Promise((resolve, reject) => {
+            const attemptFetchLocation = () => {
+                Geolocation.getCurrentPosition(
+                    async (position) => {
+                        try {
+                            const { latitude, longitude } = position.coords;
 
-              // Photon API
-              const response = await fetch(
-                `https://photon.komoot.io/reverse?lat=${latitude}&lon=${longitude}`
-              );
-              const data = await response.json();
+                            const response = await fetch(
+                                `https://photon.komoot.io/reverse?lat=${latitude}&lon=${longitude}`
+                            );
+                            const data = await response.json();
 
-              // Şehir bilgisini
-              const city =
-                data.features[0]?.properties.state ||
-                //FIXME Ilce isimleri eklendiginde guncellenecek
-                data.features[0]?.properties.city ||
-                'Bilinmeyen Şehir';
+                            const city =
+                                data.features[0]?.properties.state ||
+                                data.features[0]?.properties.city ||
+                                'Bilinmeyen Şehir';
 
-              resolve(city);
-            } catch (error) {
-              console.error("Photon API hatası:", error);
-              retryFetchLocation(error);
-            }
-          },
-          (error) => {
-            console.error("Konum alınırken hata oluştu:", error);
-            if (error.code === 1) {
-              console.error("Konum izni reddedildi.");
-            } else if (error.code === 2) {
-              console.log("Konum alınamadı. GPS kapalı olabilir.");
-            } else if (error.code === 3) {
-              console.error("Konum isteği zaman aşımına uğradı.");
-            }
-            retryFetchLocation(error);
-          },
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-        );
-      };
+                            resolve(city);
+                        } catch (error) {
+                            console.error("Photon API hatası:", error);
+                            retryFetchLocation(error);
+                        }
+                    },
+                    (error) => {
+                        console.error("Konum alınırken hata oluştu:", error);
+                        if (error.code === 1) {
+                            console.error("Konum izni reddedildi.");
+                        } else if (error.code === 2) {
+                            console.log("Konum alınamadı. GPS kapalı olabilir.");
+                        } else if (error.code === 3) {
+                            console.error("Konum isteği zaman aşımına uğradı.");
+                        }
+                        retryFetchLocation(error);
+                    },
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+                );
+            };
 
-      const retryFetchLocation = (error) => {
-        console.log("Konum alınamadı. 30 saniye sonra tekrar denenecek...");
-        setTimeout(() => {
-          attemptFetchLocation();
-        }, 30 * 1000); // 30 saniye bekleme süresi
-      };
+            const retryFetchLocation = (error) => {
+                console.log("Konum alınamadı. 30 saniye sonra tekrar denenecek...");
+                setTimeout(() => {
+                    attemptFetchLocation();
+                }, 60 * 1000);
+            };
 
-      attemptFetchLocation();
-    });
-  }
+            attemptFetchLocation();
+        });
+    }
 }
 
 export default NavigationService;

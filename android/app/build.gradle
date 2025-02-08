@@ -52,6 +52,7 @@ react {
     //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
     // hermesFlags = ["-O", "-output-source-map"]
 
+
     /* Autolinking */
     autolinkLibrariesWithApp()
 }
@@ -74,6 +75,8 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'org.webkit:android-jsc:+' // Ensure this uses AndroidX version
 
+
+
 android {
      ndkVersion "26.1.10909125"  // NDK sürümünüz burada tanımlandı
     compileSdk 35// Güncel bir build tools sürümü kullanın
@@ -95,6 +98,19 @@ android {
             keyPassword 'android'
         }
     }
+
+    
+    // buildFeatures{
+    //     viewBinding true
+    // }
+        viewBinding {
+        enabled = true
+    }
+    dataBinding {
+        enabled = true
+    }
+
+
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
@@ -107,25 +123,43 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+    packagingOptions {
+    pickFirst 'lib/arm64-v8a/libhermes.so'
+    pickFirst 'lib/arm64-v8a/libhermes_executor.so'
+    pickFirst 'lib/arm64-v8a/libhermestooling.so'
+    pickFirst 'lib/armeabi-v7a/libhermes.so'
+    pickFirst 'lib/armeabi-v7a/libhermes_executor.so'
+    pickFirst 'lib/armeabi-v7a/libhermestooling.so'
+}
 }
 
 dependencies {
+    
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
-    if (hermesEnabled.toBoolean()) {
-        implementation("com.facebook.react:hermes-android")
-    } else {
-        implementation jscFlavor
-    }
-    implementation 'com.facebook.react:react-native:+'  // From node_modules
+if (hermesEnabled.toBoolean()) {
+    implementation("com.facebook.react:hermes-android")
+} else {
+    implementation jscFlavor
+}
+    //noinspection GradleDynamicVersion
+    implementation("com.facebook.react:react-native:+")
+    implementation("com.facebook.react:hermes-android")
+
     implementation project(':react-native-push-notification')
     // Remove legacy support libraries and use AndroidX dependencies
     // Example: androidx.core
-    implementation 'androidx.core:core:1.10.0' // Ensure this uses AndroidX version
+    implementation 'androidx.core:core:1.15.0' // Ensure this uses AndroidX version
 
       // WorkManager için
-    implementation "androidx.work:work-runtime-ktx:2.8.1"
-    implementation "androidx.work:work-runtime:2.8.1"
+    implementation  'androidx.work:work-runtime-ktx:2.10.0'
+    implementation  'androidx.work:work-runtime:2.10.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+    implementation 'com.google.android.gms:play-services-location:21.3.0' // Konum hizmetleri için
+    implementation 'org.json:json:20241224'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+
 }
