@@ -43,7 +43,6 @@ const FileOperations = {
       }
     } catch (error) {
       console.error('JSON dosyası oluşturulurken hata oluştu:', error);
-      // NotificationService.sendNotification("Hata", "JSON dosyası oluşturulurken hata oluştu."); // Kullanıcıya bildirim gönder
     }
   },
 

@@ -12,50 +12,74 @@ import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.facebook.soloader.SoLoader
 
+import android.location.LocationManager
+import android.content.Context
+
 import androidx.work.*
 import java.util.concurrent.TimeUnit
 
 class MainApplication : Application(), ReactApplication {
 
-  override val reactNativeHost: ReactNativeHost =
-      object : DefaultReactNativeHost(this) {
-        override fun getPackages(): List<ReactPackage> =
-            PackageList(this).packages.apply {
+    override val reactNativeHost: ReactNativeHost =
+        object : DefaultReactNativeHost(this) {
+            override fun getPackages(): List<ReactPackage> =
+                PackageList(this).packages.apply {
+                    // Burada özel paketlerinizi ekleyebilirsiniz
+                }
 
-            }
+            override fun getJSMainModuleName(): String = "index"
 
-        override fun getJSMainModuleName(): String = "index"
+            override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG
 
-        override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG
+            override val isNewArchEnabled: Boolean = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED
+            override val isHermesEnabled: Boolean = BuildConfig.IS_HERMES_ENABLED
+        }
 
-        override val isNewArchEnabled: Boolean = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED
-        override val isHermesEnabled: Boolean = BuildConfig.IS_HERMES_ENABLED
-      }
+    override val reactHost: ReactHost
+        get() = getDefaultReactHost(applicationContext, reactNativeHost)
 
-  override val reactHost: ReactHost
-    get() = getDefaultReactHost(applicationContext, reactNativeHost)
+    private fun setupWorkers() {
+        val constraints = Constraints.Builder()
+            .setRequiresDeviceIdle(false)
+            .setRequiresCharging(false)
+            .build()
 
-  override fun onCreate() {
-    super.onCreate()
-    SoLoader.init(this, OpenSourceMergedSoMapping)
-    if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
-      load()
+        // GPS kontrol worker'ı
+        val gpsCheckWorkRequest = PeriodicWorkRequestBuilder<GpsCheckWorker>(15, TimeUnit.MINUTES)
+            .setConstraints(constraints)
+            .setInitialDelay(1, TimeUnit.MINUTES)  // 1 dakika gecikmeyle başla
+            .build()
+
+        // Kişi sayısı kontrol worker'ı
+        val cityCheckWorkRequest = PeriodicWorkRequestBuilder<CityCheckWorker>(15, TimeUnit.MINUTES)
+            .setConstraints(constraints)
+            .setInitialDelay(2, TimeUnit.MINUTES)  // 2 dakika gecikmeyle başla
+            .build()
+
+        val workManager = WorkManager.getInstance(applicationContext)
+
+        // Worker'ları başlat
+        workManager.enqueueUniquePeriodicWork(
+            GpsCheckWorker.WORK_NAME,
+            ExistingPeriodicWorkPolicy.REPLACE,
+            gpsCheckWorkRequest
+        )
+
+        workManager.enqueueUniquePeriodicWork(
+            CityCheckWorker.WORK_NAME,
+            ExistingPeriodicWorkPolicy.REPLACE,
+            cityCheckWorkRequest
+        )
     }
 
-    val constraints = Constraints.Builder()
-            .setRequiresDeviceIdle(false) // Cihaz boşta olmasını gerektirmiyor
-            .setRequiresCharging(false) // Şarjda olmasını gerektirmiyor
-            .build()
+    override fun onCreate() {
+        super.onCreate()
+        SoLoader.init(this, OpenSourceMergedSoMapping)
+        if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
+            load()
+        }
 
-        val workRequest = PeriodicWorkRequestBuilder<NotificationWorker>(20, TimeUnit.MINUTES) // 15 dakikada bir
-            .setConstraints(constraints)
-            .addTag(NotificationWorker.WORK_NAME) // İsteğe bağlı etiket
-            .build()
-
-        WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
-            NotificationWorker.WORK_NAME, // Benzersiz bir isim
-            ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, // Daha önce planlanmış bir iş varsa ne yapılacağını belirtir
-            workRequest
-        )
+        // Tüm worker'ları tek bir fonksiyonda başlat
+        setupWorkers()
     }
 }
