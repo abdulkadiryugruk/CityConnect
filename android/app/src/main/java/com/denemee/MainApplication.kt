@@ -49,29 +49,15 @@ class MainApplication : Application(), ReactApplication {
         // GPS kontrol worker'ı
         val gpsCheckWorkRequest = PeriodicWorkRequestBuilder<GpsCheckWorker>(15, TimeUnit.MINUTES)
             .setConstraints(constraints)
-            .setInitialDelay(1, TimeUnit.MINUTES)  // 1 dakika gecikmeyle başla
+            .setInitialDelay(1, TimeUnit.MINUTES)
             .build()
 
-        // Kişi sayısı kontrol worker'ı
-        // val cityCheckWorkRequest = PeriodicWorkRequestBuilder<CityCheckWorker>(15, TimeUnit.MINUTES)
-        //     .setConstraints(constraints)
-        //     .setInitialDelay(2, TimeUnit.MINUTES)  // 2 dakika gecikmeyle başla
-        //     .build()
-
-        val workManager = WorkManager.getInstance(applicationContext)
-
-        // Worker'ları başlat
-        workManager.enqueueUniquePeriodicWork(
-            GpsCheckWorker.WORK_NAME,
-            ExistingPeriodicWorkPolicy.REPLACE,
-            gpsCheckWorkRequest
-        )
-
-        // workManager.enqueueUniquePeriodicWork(
-        //     CityCheckWorker.WORK_NAME,
-        //     ExistingPeriodicWorkPolicy.REPLACE,
-        //     cityCheckWorkRequest
-        // )
+        WorkManager.getInstance(applicationContext)
+            .enqueueUniquePeriodicWork(
+                GpsCheckWorker.WORK_NAME,
+                ExistingPeriodicWorkPolicy.REPLACE,
+                gpsCheckWorkRequest
+            )
     }
 
     override fun onCreate() {
