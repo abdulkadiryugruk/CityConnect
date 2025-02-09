@@ -8,7 +8,7 @@ import android.util.Log
 
 
 class GpsCheckWorker(context: Context, workerParams: WorkerParameters) : Worker(context, workerParams) {
-    
+
     companion object {
         const val WORK_NAME = "gps_check_worker"
         const val TAG = "GpsCheckWorker"
@@ -19,39 +19,24 @@ class GpsCheckWorker(context: Context, workerParams: WorkerParameters) : Worker(
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
     }
 
-override fun doWork(): Result {
-    val isGpsEnabled = isGpsEnabled(applicationContext)
-    
-    if (isGpsEnabled) {
-        // GPS açıksa, CityCheckWorker'ı başlat
-        startCityCheckWorker()
-        Log.d(TAG, "GPS ACIK oldugu icin GpsCheckWorker icerisinde CityCheckWorker calisti")
-    } else {
-        // GPS kapalıysa, bildirim worker'ını durdur
-        WorkManager.getInstance(applicationContext)
-            .cancelUniqueWork(CityCheckWorker.WORK_NAME)
-        Log.d(TAG, "GPS KAPALI oldugu icin GpsCheckWorker icerisinde CityCheckWorker calismadi")
+    override fun doWork(): Result {
+        val isGpsEnabled = isGpsEnabled(applicationContext)
 
+        if (isGpsEnabled) {
+            // GPS açık olduğunda LocationWorker başlatılır
+            val locationWork = OneTimeWorkRequestBuilder<LocationWorker>().build()
+            val workManager = WorkManager.getInstance(applicationContext)
+
+            // LocationWorker'ı başlat
+            workManager.enqueue(locationWork)
+
+            // Eğer LocationWorker başarılı olursa, işlemi başarılı olarak işaretle
+            return Result.success()
+        } else {
+            // GPS kapalıysa, herhangi bir işlem yapma
+            Log.d(TAG, "GPS kapalı olduğu için LocationWorker başlatılmıyor.")
+            return Result.failure()  // GPS kapalıysa işlem başarısız olmalı
+        }
     }
 
-    return Result.success()
-}
-
-private fun startCityCheckWorker() {
-    val constraints = Constraints.Builder()
-        .setRequiresDeviceIdle(false)
-        .setRequiresCharging(false)
-        .build()
-
-    val cityCheckWorkRequest = OneTimeWorkRequestBuilder<CityCheckWorker>()
-        .setConstraints(constraints)
-        .build()
-
-    WorkManager.getInstance(applicationContext)
-        .enqueueUniqueWork(
-            CityCheckWorker.WORK_NAME,
-            ExistingWorkPolicy.KEEP,  // Eğer çalışıyorsa yenisiyle değiştir
-            cityCheckWorkRequest
-        )
-}
 }

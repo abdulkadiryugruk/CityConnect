@@ -9,9 +9,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.ActivityCompat
-import androidx.work.Worker
-import androidx.work.WorkerParameters
-import androidx.work.workDataOf
+import androidx.work.*
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -30,40 +28,43 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Worker(
     }
 
     override fun doWork(): Result {
-    try {
-        val locationManager = applicationContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        try {
+            val locationManager = applicationContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-        if (ActivityCompat.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED) {
-            Log.e(TAG, "Location permission not granted")
+            if (ActivityCompat.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+                Log.e(TAG, "Location permission not granted")
+                return Result.failure()
+            }
+
+            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                Log.e(TAG, "GPS is disabled")
+                return Result.failure()
+            }
+
+            val location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+            ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+
+
+            return if (location != null) {
+                val cityName = getCityName(location.latitude, location.longitude) ?: "Unknown City"
+                val outputData = workDataOf(
+                    "latitude" to location.latitude,
+                    "longitude" to location.longitude,
+                    "state" to cityName
+                )
+                Log.d(TAG, "Location: ${location.latitude}, ${location.longitude}, state: $cityName")
+                // CityCheckWorker'ı başlat
+                startCityCheckWorker(cityName)
+                Result.success(outputData)
+            } else {
+                getFusedLocation()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in LocationWorker: ${e.message}")
             return Result.failure()
         }
-
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            Log.e(TAG, "GPS is disabled")
-            return Result.failure()
-        }
-
-        val location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-
-        return if (location != null) {
-            val cityName = getCityName(location.latitude, location.longitude) ?: "Unknown City"
-            val outputData = workDataOf(
-                "latitude" to location.latitude,
-                "longitude" to location.longitude,
-                "city" to cityName
-            )
-            Log.d(TAG, "Location: ${location.latitude}, ${location.longitude}, City: $cityName")
-            Result.success(outputData)
-        } else {
-            getFusedLocation()
-        }
-    } catch (e: Exception) {
-        Log.e(TAG, "Error in LocationWorker: ${e.message}")
-        return Result.failure()
     }
-}
-
 
     private fun getFusedLocation(): Result {
         val latch = CountDownLatch(1)
@@ -80,10 +81,10 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Worker(
                         workDataOf(
                             "latitude" to networkLocation.latitude,
                             "longitude" to networkLocation.longitude,
-                            "city" to cityName
+                            "state" to cityName
                         )
                     )
-                    Log.d(TAG, "Network location: ${networkLocation.latitude}, ${networkLocation.longitude}, City: $cityName")
+                    Log.d(TAG, "Network location: ${networkLocation.latitude}, ${networkLocation.longitude}, state: $cityName")
                 } else {
                     Log.e(TAG, "No network location available")
                 }
@@ -98,33 +99,55 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Worker(
         return result
     }
 
-private fun getCityName(latitude: Double, longitude: Double): String? {
-    return try {
-        val urlString = "https://photon.komoot.io/reverse?lat=$latitude&lon=$longitude"
-        val url = URL(urlString)
-        val connection = url.openConnection() as HttpURLConnection
-        connection.requestMethod = "GET"
-        connection.connectTimeout = 5000
-        connection.readTimeout = 5000
+    private fun getCityName(latitude: Double, longitude: Double): String? {
+        return try {
+            val urlString = "https://photon.komoot.io/reverse?lat=$latitude&lon=$longitude"
+            val url = URL(urlString)
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 10000
+            connection.readTimeout = 10000
 
-        val inputStream = connection.inputStream
-        val reader = BufferedReader(InputStreamReader(inputStream))
-        val response = reader.use { it.readText() }
+            val inputStream = connection.inputStream
+            val reader = BufferedReader(InputStreamReader(inputStream))
+            val response = reader.use { it.readText() }
 
-        // JSON yanıtını parse etme
-        val jsonObject = JSONObject(response)
-        val features = jsonObject.getJSONArray("features")
+            // JSON yanıtını parse etme
+            val jsonObject = JSONObject(response)
+            val features = jsonObject.getJSONArray("features")
 
-        if (features.length() > 0) {
-            val properties = features.getJSONObject(0).getJSONObject("properties")
-            properties.optString("city", "Unknown City")
-        } else {
+            if (features.length() > 0) {
+                val properties = features.getJSONObject(0).getJSONObject("properties")
+                properties.optString("state", "Unknown City")
+            } else {
+                "Unknown City"
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting city name: ${e.message}")
             "Unknown City"
         }
-    } catch (e: Exception) {
-        Log.e(TAG, "Error getting city name: ${e.message}")
-        "Unknown City"
-    }
-}
 
+    }
+
+    // CityCheckWorker'ı başlatan metot
+    private fun startCityCheckWorker(cityName: String) {
+        val inputData = workDataOf("state" to cityName)
+
+        val constraints = Constraints.Builder()
+            .setRequiresDeviceIdle(false)
+            .setRequiresCharging(false)
+            .build()
+
+        val cityCheckWorkRequest = OneTimeWorkRequestBuilder<CityCheckWorker>()
+            .setInputData(inputData)
+            .setConstraints(constraints)
+            .build()
+
+        WorkManager.getInstance(applicationContext)
+            .enqueueUniqueWork(
+                CityCheckWorker.WORK_NAME,
+                ExistingWorkPolicy.REPLACE,  // Eğer çalışıyorsa yenisiyle değiştirme
+                cityCheckWorkRequest
+            )
+    }
 }

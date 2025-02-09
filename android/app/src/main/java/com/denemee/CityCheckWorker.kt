@@ -4,12 +4,10 @@ import android.content.Context
 import androidx.work.*
 import org.json.JSONObject
 import java.io.File
-import java.util.concurrent.TimeUnit
 import android.util.Log
 
-
 class CityCheckWorker(context: Context, workerParams: WorkerParameters) : Worker(context, workerParams) {
-    
+
     companion object {
         const val WORK_NAME = "city_check_worker"
         const val TAG = "CityCheckWorker"
@@ -17,6 +15,11 @@ class CityCheckWorker(context: Context, workerParams: WorkerParameters) : Worker
 
     override fun doWork(): Result {
         try {
+            // LocationWorker çalıştırılmadan önce CityCheckWorker'a cityName verisi iletilmiş olmalı
+            val cityName = inputData.getString("state") ?: "Unknown City"
+            Log.d(TAG, "Konumdan alınan şehir: $cityName")
+
+            // Şimdi JSON dosyasını kontrol edelim
             val filesDir = applicationContext.filesDir
             val jsonFile = File(filesDir, "UserCities.json")
 
@@ -27,33 +30,24 @@ class CityCheckWorker(context: Context, workerParams: WorkerParameters) : Worker
 
                 for (i in 0 until citiesArray.length()) {
                     val city = citiesArray.getJSONObject(i)
-                    if (city.getString("name").trim() == "Denizli") {
+                    if (city.getString("name").trim() == cityName) {  // cityName kullanıldı
                         val people = city.getJSONArray("people")
                         val personCount = people.length()
 
-                        // LocationWorker çalıştır
-                        val locationWork = OneTimeWorkRequestBuilder<LocationWorker>()
-                            .build()
-
-                        // NotificationWorker'ı hazırla
+                        // Bildirim Worker'ı çalıştır
                         val notificationWork = OneTimeWorkRequestBuilder<NotificationWorker>()
-                            .setInputMerger(ArrayCreatingInputMerger::class.java)
                             .setInputData(
                                 Data.Builder()
-                                    .putString("title", "Denizli Şehir Bilgisi")
-                                    .putString("message", "Denizli şehrinde şu anda $personCount kişi bulunuyor")
-                                    .putInt("personCount", personCount)  // Kişi sayısını da ekleyelim
+                                    .putString("title", "$cityName Şehir Bilgisi")
+                                    .putString("message", "$cityName şehrinde şu anda $personCount kişi bulunuyor")
+                                    .putInt("personCount", personCount)
                                     .build()
                             )
                             .build()
 
-                        // Work chain'i çalıştır
-                        WorkManager.getInstance(applicationContext)
-                            .beginWith(locationWork)
-                            .then(notificationWork)
-                            .enqueue()
+                        WorkManager.getInstance(applicationContext).enqueue(notificationWork)
 
-                        Log.d(TAG, "Work chain started with personCount: $personCount")
+                        Log.d(TAG, "Bildirim gönderildi: $cityName - $personCount kişi")
                         break
                     }
                 }

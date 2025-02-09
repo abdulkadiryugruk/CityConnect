@@ -9,8 +9,6 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import android.util.Log
 
-
-
 class NotificationWorker(context: Context, workerParams: WorkerParameters) : Worker(context, workerParams) {
 
     companion object {
@@ -22,13 +20,12 @@ class NotificationWorker(context: Context, workerParams: WorkerParameters) : Wor
 
     override fun doWork(): Result {
         try {
-            val title = inputData.getStringArray("title")?.firstOrNull()
-            val message = inputData.getStringArray("message")?.firstOrNull()
-            val latitude = inputData.getDoubleArray("latitude")?.firstOrNull() ?: 0.0
-            val personCount = inputData.getIntArray("personCount")?.firstOrNull() ?: 0
-            val longitude = inputData.getDoubleArray("longitude")?.firstOrNull() ?: 0.0
+            // title ve message verilerini doğru alalım
+            val title = inputData.getString("title")
+            val message = inputData.getString("message")
+            val personCount = inputData.getInt("personCount", 0)
 
-            Log.d(TAG, "Input data: $inputData")
+            Log.d(TAG, "Input data: $inputData") // Gelen veriyi logla
 
             if (title == null || message == null) {
                 Log.e(TAG, "Missing title or message")
@@ -37,9 +34,7 @@ class NotificationWorker(context: Context, workerParams: WorkerParameters) : Wor
 
             // Final mesajı oluştur
             var finalMessage = message
-            if (latitude != 0.0 && longitude != 0.0) {
-                finalMessage += " ve koordinatlar: $latitude - $longitude"
-            }
+            finalMessage += " Şu anda toplam $personCount kişi bulunuyor."
 
             Log.d(TAG, "Showing notification with message: $finalMessage")
             showNotification(title, finalMessage)

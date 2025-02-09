@@ -116,7 +116,7 @@ const HomeScreen = ({navigation}) => {
     try {
       // NotificationService.cancelAllNotifications();
       // NotificationService.scheduleNotification();
-      console.log('Saatlik bildirimler başlatıldı');
+      // console.log('Saatlik bildirimler başlatıldı');
     } catch (error) {
       console.error('Bildirim başlatma hatası:', error);
       // NotificationService.sendNotification("Hata", "Bildirim başlatma hatası."); // Kullanıcıya bildirim gönder
