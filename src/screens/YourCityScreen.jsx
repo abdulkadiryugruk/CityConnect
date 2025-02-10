@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -8,14 +8,11 @@ import {
   Alert,
 } from 'react-native';
 import RNFS from 'react-native-fs';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {requestLocationPermission} from './permissions/LocationPermission';
-import NavigationService from '../services/navigation/NavigationService';
+import { NativeModules } from 'react-native';
 
-const STORED_CITY_KEY = '@stored_city';
-const STORED_PEOPLE_KEY = '@stored_people';
 
 const YourCityScreen = () => {
   const [peopleList, setPeopleList] = useState([]);
@@ -23,48 +20,22 @@ const YourCityScreen = () => {
   const [personCount, setPersonCount] = useState(0);
   const navigation = useNavigation();
 
-  // AsyncStorage'dan verileri yükleme
+  // Başlangıçta şehri yükleme
   useEffect(() => {
-    loadStoredData();
+    const fetchStoredCity = async () => {
+      try {
+        const storedCity = await NativeModules.SharedPreferencesModule.getString('CityPrefs', 'last_known_city');
+        setCurrentCity(storedCity);
+      } catch (error) {
+        console.error('Şehir yüklenirken hata:', error);
+      }
+    };
+
+    fetchStoredCity();
   }, []);
 
-  // Değişiklikleri AsyncStorage'a kaydetme
-  useEffect(() => {
-    if (currentCity) {
-      saveStoredData();
-    }
-  }, [currentCity, peopleList]);
-
-  const loadStoredData = async () => {
-    try {
-      const storedCity = await AsyncStorage.getItem(STORED_CITY_KEY);
-      const storedPeople = await AsyncStorage.getItem(STORED_PEOPLE_KEY);
-      
-      if (storedCity) {
-        setCurrentCity(storedCity);
-      }
-      
-      if (storedPeople) {
-        const parsedPeople = JSON.parse(storedPeople);
-        setPeopleList(parsedPeople);
-        setPersonCount(parsedPeople.length);
-      }
-    } catch (error) {
-      console.error('Kayıtlı veriler yüklenirken hata:', error);
-    }
-  };
-
-  const saveStoredData = async () => {
-    try {
-      await AsyncStorage.setItem(STORED_CITY_KEY, currentCity);
-      await AsyncStorage.setItem(STORED_PEOPLE_KEY, JSON.stringify(peopleList));
-    } catch (error) {
-      console.error('Veriler kaydedilirken hata:', error);
-    }
-  };
-
   // Kişileri yükleme fonksiyonu
-  const loadCityContacts = async () => {
+  const loadCityContacts = useCallback(async () => {
     try {
       const path = RNFS.DocumentDirectoryPath + '/UserCities.json';
       const fileExists = await RNFS.exists(path);
@@ -77,7 +48,7 @@ const YourCityScreen = () => {
         setPersonCount(count);
   
         if (cityData) {
-          const sortedPeople = [...cityData.people].sort((a, b) => 
+          const sortedPeople = [...cityData.people].sort((a, b) =>
             (a.displayName || '').localeCompare(b.displayName || '')
           );
           setPeopleList(sortedPeople);
@@ -86,42 +57,14 @@ const YourCityScreen = () => {
     } catch (error) {
       console.error('Kişiler yüklenirken hata:', error);
     }
-  };
-
+  }, [currentCity]);
+  
   // Şehir değiştiğinde kişileri yükle
   useEffect(() => {
     if (currentCity) {
       loadCityContacts();
     }
-  }, [currentCity]);
-
-  // Konum izni ve şehir bilgisini alma
-  const handleButtonClick = async () => {
-    const hasPermission = await requestLocationPermission();
-    if (!hasPermission) {
-      Alert.alert(
-        'İzin Reddedildi',
-        'Konum izni verilmediği için işlem gerçekleştirilemiyor.',
-      );
-      return;
-    }
-    await getLocation();
-  };
-
-  // NavigationService üzerinden konum alma
-  const getLocation = async () => {
-    try {
-      const city = await NavigationService.getCityFromLocation();
-      if (city) {
-        setCurrentCity(city);
-      }
-    } catch (error) {
-      Alert.alert(
-        'Konum alınamadı', 
-        'Lütfen konumunuzun açık olduğundan emin olunuz ve izinlerinizi kontrol ediniz'
-      );
-    }
-  };
+  }, [currentCity, loadCityContacts]);
 
   const renderItem = ({item}) => (
     <View style={styles.listItem}>
@@ -132,19 +75,6 @@ const YourCityScreen = () => {
       </Text>
     </View>
   );
-
-  const clearStoredData = async () => {
-    try {
-      await AsyncStorage.removeItem(STORED_CITY_KEY);
-      await AsyncStorage.removeItem(STORED_PEOPLE_KEY);
-      setCurrentCity('');
-      setPeopleList([]);
-      setPersonCount(0);
-      Alert.alert('Başarılı', 'Kayıtlı veriler temizlendi');
-    } catch (error) {
-      console.error('Veriler temizlenirken hata:', error);
-    }
-  };
 
   return (
     <View style={styles.container}>
@@ -161,11 +91,7 @@ const YourCityScreen = () => {
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{currentCity} Kişileri</Text>
-          <TouchableOpacity 
-            onPress={clearStoredData}
-            style={styles.clearButton}>
-            <Icon name="delete" size={24} color="#fff" />
-          </TouchableOpacity>
+          <View style={styles.rightIcon} />
         </View>
       </View>
       <View style={styles.backgroundBottom}>
@@ -175,18 +101,12 @@ const YourCityScreen = () => {
             <Text style={styles.noResultText}>Kişi bulunamadı!</Text>
           ) : (
             <FlatList
+            showsVerticalScrollIndicator={false}
               data={peopleList}
               keyExtractor={(item, index) => index.toString()}
               renderItem={renderItem}
             />
           )}
-
-          <TouchableOpacity style={styles.button} onPress={handleButtonClick}>
-            <Text style={styles.buttonText}>Şehri Göster</Text>
-          </TouchableOpacity>
-          <Text style={styles.selectedCityText}>
-            Şu anki konum: {currentCity || 'Henüz bir şehir seçilmedi'}
-          </Text>
         </View>
       </View>
     </View>
@@ -278,22 +198,5 @@ const styles = StyleSheet.create({
   listItemText: {
     fontSize: 18,
     color: '#333',
-  },
-  button: {
-    marginTop: 20,
-    padding: 15,
-    backgroundColor: '#42c0b8',
-    alignItems: 'center',
-    borderRadius: 10,
-  },
-  buttonText: {
-    fontSize: 16,
-    color: '#fff',
-  },
-  selectedCityText: {
-    marginTop: 15,
-    fontSize: 18,
-    color: '#333',
-    textAlign: 'center',
   },
 });

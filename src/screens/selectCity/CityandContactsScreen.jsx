@@ -85,27 +85,27 @@ const CityandContactsScreen = () => {
                   return {
                     ...city,
                     people: [
-                      ...(city.people || []), 
+                      ...(city.people || []),
                       ...selectedPeoples.map(p => ({ fullName: p.displayName }))
                     ],
                   };
                 }
                 return city;
               });
-  
+
               const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
               await RNFS.writeFile(
                 filePath,
                 JSON.stringify({cities: updatedCitiesData}),
                 'utf8'
               );
-  
+
               setUnmatchedPeoples(
-                unmatchedPeoples.filter(p => 
+                unmatchedPeoples.filter(p =>
                   !selectedPeoples.some(selected => selected.displayName === p.displayName)
                 )
               );
-  
+
               setCitiesData(updatedCitiesData);
               setSelectedPeoples([]); // Seçimleri temizle
 
@@ -125,42 +125,13 @@ const CityandContactsScreen = () => {
     );
   };
   const toggleItemSelection = (people) => {
-    setSelectedPeoples(current => 
+    setSelectedPeoples(current =>
       current.includes(people)
         ? current.filter(p => p !== people)
         : [...current, people]
     );
   };
-  const handleAddToCity = async people => {
-    try {
-      // Şehirler listesine ekleme işlemi
-      const updatedCitiesData = citiesData.map(city => {
-        if (city.name === cityName) {
-          // Seçilen şehirdeki kişilere ekleme
-          return {
-            ...city,
-            people: [...(city.people || []), {fullName: people.displayName}],
-          };
-        }
-        return city;
-      });
 
-
-
-
-      // Rehberdeki kişiyi eşleşen kişilerden çıkarma
-      setUnmatchedPeoples(
-        unmatchedPeoples.filter(p => p.displayName !== people.displayName),
-      );
-
-      // Güncellenmiş şehirler verisini state'e kaydetme
-      setCitiesData(updatedCitiesData);
-
-      console.log(`Kişi ${people.displayName} ${cityName} şehrine eklendi!`);
-    } catch (error) {
-      console.error('Şehre eklerken hata oluştu:', error);
-    }
-  };
 
   return (
     <View style={styles.container}>
@@ -198,14 +169,15 @@ const CityandContactsScreen = () => {
             <Text style={styles.noResultText}>Eşleşmeyen kişi bulunamadı!</Text>
           ) : (
             <FlatList
+            
               style={styles.listStyle}
               data={filteredUnmatchedPeoples}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({item}) => (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[
-                    styles.row, 
-                    selectedPeoples.includes(item) && styles.selectedRow
+                    styles.row,
+                    selectedPeoples.includes(item) && styles.selectedRow,
                   ]}
                   onLongPress={() => toggleItemSelection(item)}
                   onPress={() => toggleItemSelection(item)}
@@ -257,7 +229,7 @@ const styles = StyleSheet.create({
   listStyle: {
     width: '100%',
     marginTop:'1%',
-    marginBottom:'1%'
+    marginBottom:'1%',
   },
   row: {
     width: '72%',
@@ -274,7 +246,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: 'black',
-    width:'65%'
+    width:'80%',
 
   },
   noResultText: {
@@ -335,7 +307,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 0,
   },
   selectedRow: {
-    backgroundColor: '#e0f7fa', // Seçili öğe için hafif bir arka plan rengi
+    backgroundColor: '#e0f7fa',
     borderColor: '#42c0b8',
     borderWidth: 2,
   },
@@ -343,7 +315,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#4CAF50',
     padding: 10,
     borderRadius: 5,
-    marginLeft:'-10%'
-    
+    marginLeft:'-10%',
   },
 });

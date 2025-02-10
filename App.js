@@ -15,6 +15,7 @@ import SelectContactScreen from './src/screens/selectPeople/SelectContactScreen'
 import ContactAndCityScreen from './src/screens/selectPeople/ContactAndCityScreen';
 import TutorialBackground from './src/screens/TutorialBackground';
 import YourCityScreen from './src/screens/YourCityScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 
 
 
@@ -97,6 +98,11 @@ const App = () => {
           options={{headerShown: false}}
           name="YourCityScreen"
           component={YourCityScreen}
+        />
+        <Stack.Screen
+          options={{headerShown: false}}
+          name="SettingsScreen"
+          component={SettingsScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>

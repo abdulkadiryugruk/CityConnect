@@ -1,4 +1,4 @@
-import {Button, StyleSheet, Text, View, Alert, Image} from 'react-native';
+import {Button, StyleSheet, Text, View, Alert, Image, Touchable, TouchableOpacity} from 'react-native';
 import React, {useState, useCallback, useEffect} from 'react';
 import CustomButton from '../components/CustomButton';
 import {Dimensions} from 'react-native';
@@ -8,6 +8,8 @@ import {requestContactPermission} from './permissions/ContactsPermission';
 import NotificationPermissionManager  from './permissions/NotificationPermission';
 // import NotificationService from '../services/notification/notificationService';
 import {requestLocationPermission} from './permissions/LocationPermission';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+
 
 const {width} = Dimensions.get('window');
 const dynamicFontSize = width * 0.08;
@@ -136,7 +138,7 @@ const HomeScreen = ({navigation}) => {
         ),
       ],
     }));
-  
+
 
   const handleScanContacts = useCallback(async () => {
     if (isScanning) return;
@@ -236,6 +238,16 @@ const HomeScreen = ({navigation}) => {
             pressed={() => navigation.navigate('YourCityScreen')}
           />
         </View>
+        <View style={styles.bottomBar}>
+          <TouchableOpacity style={styles.Settings}
+          onPress={()=> navigation.navigate('SettingsScreen')}
+          >
+          <Icon
+          name="settings"
+          size={24}
+          color="#fff"/>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -297,5 +309,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
+  },
+  bottomBar:{
+    position: 'absolute',
+    bottom: 0,
+    width: '90%',
+    marginLeft:'5%',
+    height: '9%',
+    backgroundColor:'grey',
+    alignItems:'flex-end',
+    justifyContent:'center',
+    borderRadius:20,
+    
+  },
+  Settings:{
+    paddingHorizontal:'10%',
   },
 });

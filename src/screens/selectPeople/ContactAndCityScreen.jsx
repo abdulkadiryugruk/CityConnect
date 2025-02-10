@@ -149,6 +149,7 @@ const handleAddToPeople = async (city) => {
         <Text style={styles.noResultText}>Şehir bulunamadı!</Text>
       ) : (
         <FlatList
+        showsVerticalScrollIndicator={false}
           style={styles.listStyle}
           data={filteredCities}
           renderItem={renderCityItem}

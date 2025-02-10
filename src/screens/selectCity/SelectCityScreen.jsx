@@ -86,6 +86,7 @@ const SelectCityScreen = () => {
               keyExtractor={item => item.name}
               initialNumToRender={11}
               removeClippedSubviews={true}
+              showsVerticalScrollIndicator={false}
             />
           )}
         </View>

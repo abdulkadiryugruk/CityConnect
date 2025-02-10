@@ -105,6 +105,7 @@ const SelectContactScreen = () => {
             <Text style={styles.noResultText}>Eşleşmeyen kişi bulunamadı!</Text>
           ) : (
             <FlatList
+            showsVerticalScrollIndicator={false}
               style={styles.listStyle}
               data={filteredUnmatchedPeoples}
               keyExtractor={(item, index) => index.toString()}

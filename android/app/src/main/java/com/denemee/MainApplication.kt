@@ -12,6 +12,7 @@ import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.facebook.soloader.SoLoader
 import android.util.Log
+import com.denemee.SharedPreferencesModule;
 
 
 import android.location.LocationManager
@@ -27,6 +28,7 @@ class MainApplication : Application(), ReactApplication {
             override fun getPackages(): List<ReactPackage> =
                 PackageList(this).packages.apply {
                     // Burada özel paketlerinizi ekleyebilirsiniz
+                    add(SharedPreferencesPackage())
                 }
 
             override fun getJSMainModuleName(): String = "index"
