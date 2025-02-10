@@ -31,10 +31,10 @@ class NotificationWorker(context: Context, workerParams: WorkerParameters) : Wor
                 return Result.failure()
             }
 
-            val finalMessage = "$message Şu anda toplam $personCount kişi bulunuyor."
-            Log.d(TAG, "Showing notification with message: $finalMessage")
+            val finalMessage = "$message."
+            Log.d(TAG, "Bildirim mesaji: $message")
             
-            showNotification(title, finalMessage)
+            showNotification(title, message)
             Result.success()
         } catch (e: Exception) {
             Log.e(TAG, "Error in NotificationWorker: ${e.message}")
