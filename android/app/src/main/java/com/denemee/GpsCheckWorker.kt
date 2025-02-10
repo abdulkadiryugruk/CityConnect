@@ -20,23 +20,18 @@ class GpsCheckWorker(context: Context, workerParams: WorkerParameters) : Worker(
     }
 
     override fun doWork(): Result {
-        val isGpsEnabled = isGpsEnabled(applicationContext)
-
-        if (isGpsEnabled) {
-            // GPS açık olduğunda LocationWorker başlatılır
-            val locationWork = OneTimeWorkRequestBuilder<LocationWorker>().build()
-            val workManager = WorkManager.getInstance(applicationContext)
-
-            // LocationWorker'ı başlat
-            workManager.enqueue(locationWork)
-
-            // Eğer LocationWorker başarılı olursa, işlemi başarılı olarak işaretle
-            return Result.success()
-        } else {
-            // GPS kapalıysa, herhangi bir işlem yapma
-            Log.d(TAG, "GPS kapalı olduğu için LocationWorker başlatılmıyor.")
-            return Result.failure()  // GPS kapalıysa işlem başarısız olmalı
+        return try {
+            if (isGpsEnabled(applicationContext)) {
+                val locationWork = OneTimeWorkRequestBuilder<LocationWorker>().build()
+                WorkManager.getInstance(applicationContext).enqueue(locationWork)
+                Result.success()
+            } else {
+                Log.d(TAG, "GPS KAPALI olduğu için LocationWorker başlatılmıyor. 15 dk sonra tekrar denenecek!")
+                Result.failure()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in GpsCheckWorker: ${e.message}")
+            Result.failure()
         }
     }
-
 }

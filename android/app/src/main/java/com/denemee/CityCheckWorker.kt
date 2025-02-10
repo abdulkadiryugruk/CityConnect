@@ -14,12 +14,10 @@ class CityCheckWorker(context: Context, workerParams: WorkerParameters) : Worker
     }
 
     override fun doWork(): Result {
-        try {
-            // LocationWorker çalıştırılmadan önce CityCheckWorker'a cityName verisi iletilmiş olmalı
+        return try {
             val cityName = inputData.getString("state") ?: "Unknown City"
             Log.d(TAG, "Konumdan alınan şehir: $cityName")
 
-            // Şimdi JSON dosyasını kontrol edelim
             val filesDir = applicationContext.filesDir
             val jsonFile = File(filesDir, "UserCities.json")
 
@@ -30,11 +28,10 @@ class CityCheckWorker(context: Context, workerParams: WorkerParameters) : Worker
 
                 for (i in 0 until citiesArray.length()) {
                     val city = citiesArray.getJSONObject(i)
-                    if (city.getString("name").trim() == cityName) {  // cityName kullanıldı
+                    if (city.getString("name").trim() == cityName) {
                         val people = city.getJSONArray("people")
                         val personCount = people.length()
 
-                        // Bildirim Worker'ı çalıştır
                         val notificationWork = OneTimeWorkRequestBuilder<NotificationWorker>()
                             .setInputData(
                                 Data.Builder()
@@ -46,17 +43,16 @@ class CityCheckWorker(context: Context, workerParams: WorkerParameters) : Worker
                             .build()
 
                         WorkManager.getInstance(applicationContext).enqueue(notificationWork)
-
                         Log.d(TAG, "Bildirim gönderildi: $cityName - $personCount kişi")
                         break
                     }
                 }
             }
 
-            return Result.success()
+            Result.success()
         } catch (e: Exception) {
             Log.e(TAG, "Error in CityCheckWorker: ${e.message}")
-            return Result.failure()
+            Result.failure()
         }
     }
 }

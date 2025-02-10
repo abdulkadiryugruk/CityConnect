@@ -5,48 +5,42 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.work.*
+import kotlinx.coroutines.*
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
-class LocationWorker(context: Context, workerParams: WorkerParameters) : Worker(context, workerParams) {
+class LocationWorker(context: Context, workerParams: WorkerParameters) : CoroutineWorker(context, workerParams) {
 
     companion object {
         const val WORK_NAME = "location_worker"
         const val TAG = "LocationWorker"
-        private const val LOCATION_TIMEOUT = 30L // saniye
-        private const val PHOTON_API_URL = "https://photon.komoot.io/reverse?lat=%f&lon=%f"
     }
 
-    override fun doWork(): Result {
+    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
             val locationManager = applicationContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
             if (ActivityCompat.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
                 Log.e(TAG, "Location permission not granted")
-                return Result.failure()
+                return@withContext Result.failure()
             }
 
             if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                 Log.e(TAG, "GPS is disabled")
-                return Result.failure()
+                return@withContext Result.failure()
             }
 
             val location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-            ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
 
-
-            return if (location != null) {
+            return@withContext if (location != null) {
                 val cityName = getCityName(location.latitude, location.longitude) ?: "Unknown City"
                 val outputData = workDataOf(
                     "latitude" to location.latitude,
@@ -54,6 +48,7 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Worker(
                     "state" to cityName
                 )
                 Log.d(TAG, "Location: ${location.latitude}, ${location.longitude}, state: $cityName")
+
                 // CityCheckWorker'ı başlat
                 startCityCheckWorker(cityName)
                 Result.success(outputData)
@@ -62,45 +57,37 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Worker(
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error in LocationWorker: ${e.message}")
-            return Result.failure()
+            Result.failure()
         }
     }
 
-    private fun getFusedLocation(): Result {
-        val latch = CountDownLatch(1)
-        var result: Result = Result.failure()
+    private suspend fun getFusedLocation(): Result = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val locationManager = applicationContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            val networkLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
 
-        Handler(Looper.getMainLooper()).post {
-            try {
-                val locationManager = applicationContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-                val networkLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-
-                if (networkLocation != null) {
-                    val cityName = getCityName(networkLocation.latitude, networkLocation.longitude)
-                    result = Result.success(
-                        workDataOf(
-                            "latitude" to networkLocation.latitude,
-                            "longitude" to networkLocation.longitude,
-                            "state" to cityName
-                        )
+            if (networkLocation != null) {
+                val cityName = getCityName(networkLocation.latitude, networkLocation.longitude)
+                Log.d(TAG, "Network location: ${networkLocation.latitude}, ${networkLocation.longitude}, state: $cityName")
+                Result.success(
+                    workDataOf(
+                        "latitude" to networkLocation.latitude,
+                        "longitude" to networkLocation.longitude,
+                        "state" to cityName
                     )
-                    Log.d(TAG, "Network location: ${networkLocation.latitude}, ${networkLocation.longitude}, state: $cityName")
-                } else {
-                    Log.e(TAG, "No network location available")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error getting fused location: ${e.message}")
-            } finally {
-                latch.countDown()
+                )
+            } else {
+                Log.e(TAG, "No network location available")
+                Result.failure()
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting fused location: ${e.message}")
+            Result.failure()
         }
-
-        latch.await(5, TimeUnit.SECONDS)
-        return result
     }
 
-    private fun getCityName(latitude: Double, longitude: Double): String? {
-        return try {
+    private suspend fun getCityName(latitude: Double, longitude: Double): String? = withContext(Dispatchers.IO) {
+        return@withContext try {
             val urlString = "https://photon.komoot.io/reverse?lat=$latitude&lon=$longitude"
             val url = URL(urlString)
             val connection = url.openConnection() as HttpURLConnection
@@ -126,7 +113,6 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Worker(
             Log.e(TAG, "Error getting city name: ${e.message}")
             "Unknown City"
         }
-
     }
 
     // CityCheckWorker'ı başlatan metot
@@ -146,7 +132,7 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Worker(
         WorkManager.getInstance(applicationContext)
             .enqueueUniqueWork(
                 CityCheckWorker.WORK_NAME,
-                ExistingWorkPolicy.REPLACE,  // Eğer çalışıyorsa yenisiyle değiştirme
+                ExistingWorkPolicy.REPLACE,  // Eğer çalışıyorsa yenisiyle değiştir
                 cityCheckWorkRequest
             )
     }
