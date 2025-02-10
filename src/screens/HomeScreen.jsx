@@ -123,31 +123,20 @@ const HomeScreen = ({navigation}) => {
     }
   };
 
-  const assignContactsToCities = (contacts, citiesData) => {
-    return citiesData.cities.map(city => {
-      const matchedContacts = contacts.filter(
-        contact =>
+  const assignContactsToCities = (contacts, citiesData) => 
+    citiesData.cities.map(city => ({
+      ...city,
+      people: [
+        ...city.people,
+        ...contacts.filter(contact =>
           contact.fullName &&
           city.name &&
-          contact.fullName.toLowerCase().includes(city.name.toLowerCase()),
-      );
-
-      const mergedPeople = [
-        ...city.people,
-        ...matchedContacts.filter(
-          newPerson =>
-            !city.people.some(
-              existingPerson => existingPerson.fullName === newPerson.fullName,
-            ),
+          contact.fullName.toLowerCase().includes(city.name.toLowerCase()) &&
+          !city.people.some(existing => existing.fullName === contact.fullName)
         ),
-      ];
-
-      return {
-        ...city,
-        people: mergedPeople,
-      };
-    });
-  };
+      ],
+    }));
+  
 
   const handleScanContacts = useCallback(async () => {
     if (isScanning) return;

@@ -70,11 +70,16 @@ const SelectContactScreen = () => {
       person.displayName &&
       person.displayName.toLowerCase().includes(search?.toLowerCase() || ''),
   );
-  const removeMatchedPerson = personName => {
-    setUnmatchedPeoples(prev =>
-      prev.filter(person => person.displayName !== personName),
-    );
-  };
+  useEffect(() => {
+    // Navigation options'a removeMatchedPerson fonksiyonunu ekle
+    navigation.setOptions({
+      removeMatchedPerson: (name) => {
+        setUnmatchedPeoples(prev =>
+          prev.filter(person => person.displayName !== name)
+        );
+      },
+    });
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
@@ -110,7 +115,7 @@ const SelectContactScreen = () => {
                     onPress={() =>
                       navigation.navigate('ContactAndCityScreen', {
                         peopleName: item.displayName,
-                        removeMatchedPerson,
+                        // removeMatchedPerson,
                       })
                     }>
                     <Text style={styles.cityText}>{item.displayName}</Text>

@@ -15,14 +15,14 @@ const ContactAndCityScreen = () => {
   const [search, setSearch] = useState(''); // Arama metni
   const navigation = useNavigation(); // navigation nesnesini hook ile alıyoruz
 
-  useEffect(() => {
-    navigation.setOptions({
-      removeMatchedPerson: (name) => {
-        console.log(`${name} başarıyla kaldırıldı.`);
-        // Burada removeMatchedPerson fonksiyonunu istediğiniz gibi kullanabilirsiniz
-      },
-    });
-  }, [navigation]);
+  // useEffect(() => {
+  //   navigation.setOptions({
+  //     removeMatchedPerson: (name) => {
+  //       console.log(`${name} başarıyla kaldırıldı.`);
+  //       // Burada removeMatchedPerson fonksiyonunu istediğiniz gibi kullanabilirsiniz
+  //     },
+  //   });
+  // }, [navigation]);
 
   useEffect(() => {
     if (isFocused){
@@ -82,13 +82,11 @@ const handleAddToPeople = async (city) => {
 
             setCities(updatedCities);
 
-            navigation.getParent()?.removeMatchedPerson?.(peopleName);
+            // navigation.getParent()?.removeMatchedPerson?.(peopleName);
+            navigation.getParent()?.getState()?.routes?.find(
+              route => route.name === 'SelectContactScreen'
+            )?.options?.removeMatchedPerson?.(peopleName);
 
-            // Alert.alert(
-            //   'Kişi Eklendi ✅', 
-            //   `${peopleName}, başarıyla ${city.name} şehrine eklendi.`, 
-            //   [{ text: 'Tamam', style: 'default' }]
-            // );
             ToastAndroid.showWithGravityAndOffset(
               `${peopleName}, ${city.name} şehrine eklendi!`,
               ToastAndroid.LONG,

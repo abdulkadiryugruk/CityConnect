@@ -24,10 +24,10 @@ const EditScreen = () => {
           const parsedData = JSON.parse(fileData);
           setCities(parsedData.cities || []);
 
-          // Varsayılan olarak tüm şehirleri açık hale getir
+          // Varsayılan olarak tüm şehirler kapali
           const initialExpandedState = {};
           parsedData.cities.forEach(city => {
-            initialExpandedState[city.name] = true;
+            initialExpandedState[city.name] = false;
           });
           setExpandedCities(initialExpandedState);
         } else {
