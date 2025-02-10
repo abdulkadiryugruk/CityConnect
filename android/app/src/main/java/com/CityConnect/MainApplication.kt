@@ -1,4 +1,4 @@
-package com.denemee
+package com.CityConnect
 
 import android.app.Application
 import com.facebook.react.PackageList
@@ -12,7 +12,7 @@ import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.facebook.soloader.SoLoader
 import android.util.Log
-import com.denemee.SharedPreferencesModule;
+import com.CityConnect.SharedPreferencesModule;
 
 
 import android.location.LocationManager

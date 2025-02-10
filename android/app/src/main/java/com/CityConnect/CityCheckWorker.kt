@@ -1,4 +1,4 @@
-package com.denemee
+package com.CityConnect
 
 import android.content.Context
 import androidx.work.*
@@ -16,7 +16,7 @@ class CityCheckWorker(context: Context, workerParams: WorkerParameters) : Worker
     }
 
     override fun doWork(): Result {
-        return try {
+        try {
             val cityName = inputData.getString("state") ?: "Unknown City"
             Log.d(TAG, "Konumdan alınan şehir: $cityName")
 
@@ -41,19 +41,22 @@ class CityCheckWorker(context: Context, workerParams: WorkerParameters) : Worker
                         if (city.getString("name").trim() == cityName) {
                             val people = city.getJSONArray("people")
                             val personCount = people.length()
+                            if (personCount > 0) {
+                                val notificationWork = OneTimeWorkRequestBuilder<NotificationWorker>()
+                                    .setInputData(
+                                        Data.Builder()
+                                            .putString("title", "Yeni şehir algılandı!")
+                                            .putString("message", "$cityName şehrinde şu anda $personCount kişi bulunuyor")
+                                            .putInt("personCount", personCount)
+                                            .build()
+                                    )
+                                    .build()
 
-                            val notificationWork = OneTimeWorkRequestBuilder<NotificationWorker>()
-                                .setInputData(
-                                    Data.Builder()
-                                        .putString("title", "Yeni şehir algılandı!")
-                                        .putString("message", "$cityName şehrinde şu anda $personCount kişi bulunuyor")
-                                        .putInt("personCount", personCount)
-                                        .build()
-                                )
-                                .build()
-
-                            WorkManager.getInstance(applicationContext).enqueue(notificationWork)
-                            Log.d(TAG, "Bildirim gönderildi: $cityName - $personCount kişi")
+                                WorkManager.getInstance(applicationContext).enqueue(notificationWork)
+                                Log.d(TAG, "Bildirim gönderildi: $cityName - $personCount kişi")
+                            } else {
+                                Log.d(TAG, "Kişi sayısı 0 olduğu için bildirim gönderilmedi")
+                            }
                             break
                         }
                     }
@@ -65,10 +68,10 @@ class CityCheckWorker(context: Context, workerParams: WorkerParameters) : Worker
                 Log.d(TAG, "Aynı şehirdesiniz: $cityName - Bildirim gönderilmedi")
             }
 
-            Result.success()
+            return Result.success()
         } catch (e: Exception) {
             Log.e(TAG, "Error in CityCheckWorker: ${e.message}")
-            Result.failure()
+            return Result.failure()
         }
     }
 }

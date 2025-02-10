@@ -1,4 +1,4 @@
-package com.denemee
+package com.CityConnect
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule

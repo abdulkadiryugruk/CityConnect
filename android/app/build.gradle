@@ -82,9 +82,9 @@ android {
     compileSdk 35// Güncel bir build tools sürümü kullanın
     // Projeye uygun SDK sürümünü belirleyin
 
-    namespace "com.denemee"
+    namespace "com.CityConnect"
     defaultConfig {
-        applicationId "com.denemee"
+        applicationId "com.CityConnect"
         minSdkVersion 24 // İhtiyacınıza göre ayarlayın
         targetSdkVersion 35 // Güncel olmasını öneririm
         versionCode 1

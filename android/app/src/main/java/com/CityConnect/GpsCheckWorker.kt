@@ -1,4 +1,4 @@
-package com.denemee
+package com.CityConnect
 
 import android.content.Context
 import android.location.LocationManager

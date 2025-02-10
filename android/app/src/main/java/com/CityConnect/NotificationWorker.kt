@@ -1,4 +1,4 @@
-package com.denemee
+package com.CityConnect
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
