@@ -234,7 +234,7 @@ const EditScreen = () => {
           <Text style={styles.headerTitle}>Duzenle</Text>
           {selectedPeoples.length > 0 ? (
             <TouchableOpacity style={styles.clearButton} onPress={handleMultiAddToCity}>
-              <Icon name="delete" size={27} color="tomato" />
+              <Icon name="delete" size={27} color="white" />
               <Text style={styles.deleteButtonText}>
                 {selectedPeoples.length}
               </Text>

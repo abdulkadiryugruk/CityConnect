@@ -64,4 +64,5 @@ class NotificationPermissionManager {
   }
 }
 
+
 export default NotificationPermissionManager;

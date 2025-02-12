@@ -1,4 +1,4 @@
-import { Platform, PermissionsAndroid, Alert } from "react-native";
+import { Platform, PermissionsAndroid, Alert,Linking } from "react-native";
 
 export const requestLocationPermission = async () => {
   try {
@@ -21,8 +21,24 @@ export const requestLocationPermission = async () => {
       );
 
       if (grantedForeground !== PermissionsAndroid.RESULTS.GRANTED) {
-        Alert.alert("İzin Reddedildi", "Konum izni gerekli.");
-        return false; // Foreground izni verilmedi
+
+                console.log('Rehber erişimi reddedildi');
+                // İzin reddedildiğinde kullanıcıya daha açıklayıcı bir mesaj göster
+                Alert.alert(
+                  'Konum İzni Gerekli',
+                  'Uygulamanın düzgün çalışması için konum erişimine ihtiyacımız var. Lütfen ayarlardan izin verin.',
+                  [
+                    {
+                      text: 'İptal',
+                      style: 'cancel',
+                    },
+                    {
+                      text: 'Ayarlara Git',
+                      onPress: () => Linking.openSettings(),
+                    },
+                  ],
+                );
+                return false;
       }
 
       // Background iznini iste

@@ -12,7 +12,9 @@ import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.facebook.soloader.SoLoader
 import android.util.Log
+
 import com.CityConnect.SharedPreferencesModule;
+import com.cityConnect.XiaomiSettingsPackage
 
 
 import android.location.LocationManager
@@ -29,6 +31,7 @@ class MainApplication : Application(), ReactApplication {
                 PackageList(this).packages.apply {
                     // Burada özel paketlerinizi ekleyebilirsiniz
                     add(SharedPreferencesPackage())
+                    add(XiaomiSettingsPackage())
                 }
 
             override fun getJSMainModuleName(): String = "index"

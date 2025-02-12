@@ -2,6 +2,7 @@
 import React from 'react'
 import {StyleSheet, Text, View,TouchableOpacity} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import CustomButton from '../components/CustomButton';
 
 const SettingsScreen = ({navigation}) => {
   return (
@@ -19,6 +20,10 @@ const SettingsScreen = ({navigation}) => {
 		  <View style={styles.backgroundBottom}>
 			<View style={styles.backgroundTopRight}></View>
 			<View style={styles.body}>
+			<CustomButton
+			buttonText="Tanitim Ekrani"
+			pressed={() => navigation.navigate('TutorialScreen')}
+			/>
 			<View style={styles.dahasonra}>
 	  <Text style={styles.text}>daha sonra ayarlanacak</Text>
 	</View>

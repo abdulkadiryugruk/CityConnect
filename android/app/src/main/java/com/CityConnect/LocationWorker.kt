@@ -20,6 +20,10 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Corouti
     companion object {
         const val WORK_NAME = "location_worker"
         const val TAG = "LocationWorker"
+        private const val PREFS_NAME = "LocationPrefs"
+        private const val LAST_LATITUDE = "last_latitude"
+        private const val LAST_LONGITUDE = "last_longitude"
+        private const val DISTANCE_THRESHOLD = 15000 // 15 km 
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -28,12 +32,12 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Corouti
 
             if (ActivityCompat.checkSelfPermission(applicationContext, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-                Log.e(TAG, "Location permission not granted")
+                Log.e(TAG, "Konum izni verilmemiş")
                 return@withContext Result.failure()
             }
 
             if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                Log.e(TAG, "GPS is disabled")
+                Log.e(TAG, "GPS kapalı")
                 return@withContext Result.failure()
             }
 
@@ -41,24 +45,65 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Corouti
                 ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
 
             return@withContext if (location != null) {
-                val cityName = getCityName(location.latitude, location.longitude) ?: "Unknown City"
-                val outputData = workDataOf(
-                    "latitude" to location.latitude,
-                    "longitude" to location.longitude,
-                    "state" to cityName
-                )
-                Log.d(TAG, "Location: ${location.latitude}, ${location.longitude}, state: $cityName")
-
-                // CityCheckWorker'ı başlat
-                startCityCheckWorker(cityName)
-                Result.success(outputData)
+                processLocation(location)
             } else {
                 getFusedLocation()
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error in LocationWorker: ${e.message}")
+            Log.e(TAG, "LocationWorker'da hata oluştu: ${e.message}")
             Result.failure()
         }
+    }
+
+    private suspend fun processLocation(location: Location): Result {
+        val sharedPrefs = applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        
+        // Son kaydedilen konumu al
+        val lastLat = sharedPrefs.getFloat(LAST_LATITUDE, 0.0f).toDouble()
+        val lastLng = sharedPrefs.getFloat(LAST_LONGITUDE, 0.0f).toDouble()
+
+        // Eğer ilk kez konum alınıyorsa (0,0)
+        if (lastLat == 0.0 && lastLng == 0.0) {
+            updateLocationAndCallApi(location, sharedPrefs)
+            return Result.success(createOutputData(location))
+        }
+
+        // Son konum ile yeni konum arasındaki mesafeyi hesapla
+        val lastLocation = Location("last").apply {
+            latitude = lastLat
+            longitude = lastLng
+        }
+
+        val distance = location.distanceTo(lastLocation)
+        Log.d(TAG, "Son konuma olan uzaklık: $distance metre")
+
+        return if (distance >= DISTANCE_THRESHOLD) {
+            updateLocationAndCallApi(location, sharedPrefs)
+            Result.success(createOutputData(location))
+        } else {
+            Log.d(TAG, "API çağrısı atlandı - mesafe eşik(15KM) değerinden küçük")
+            Result.success()
+        }
+    }
+
+    private suspend fun updateLocationAndCallApi(location: Location, sharedPrefs: android.content.SharedPreferences) {
+        // Yeni konumu kaydet
+        sharedPrefs.edit().apply {
+            putFloat(LAST_LATITUDE, location.latitude.toFloat())
+            putFloat(LAST_LONGITUDE, location.longitude.toFloat())
+            apply()
+        }
+
+        // Şehir adını al ve CityCheckWorker'ı başlat
+        val cityName = getCityName(location.latitude, location.longitude) ?: "Bilinmeyen Şehir"
+        startCityCheckWorker(cityName)
+    }
+
+    private fun createOutputData(location: Location): Data {
+        return workDataOf(
+            "latitude" to location.latitude,
+            "longitude" to location.longitude
+        )
     }
 
     private suspend fun getFusedLocation(): Result = withContext(Dispatchers.IO) {
@@ -68,7 +113,7 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Corouti
 
             if (networkLocation != null) {
                 val cityName = getCityName(networkLocation.latitude, networkLocation.longitude)
-                Log.d(TAG, "Network location: ${networkLocation.latitude}, ${networkLocation.longitude}, state: $cityName")
+                Log.d(TAG, "Ağ konumu: ${networkLocation.latitude}, ${networkLocation.longitude}, şehir: $cityName")
                 Result.success(
                     workDataOf(
                         "latitude" to networkLocation.latitude,
@@ -77,11 +122,11 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Corouti
                     )
                 )
             } else {
-                Log.e(TAG, "No network location available")
+                Log.e(TAG, "Ağ konumu bulunamadı")
                 Result.failure()
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error getting fused location: ${e.message}")
+             Log.e(TAG, "Fused konum alınırken hata oluştu: ${e.message}")
             Result.failure()
         }
     }
@@ -105,13 +150,13 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Corouti
 
             if (features.length() > 0) {
                 val properties = features.getJSONObject(0).getJSONObject("properties")
-                properties.optString("state", "Unknown City")
+                properties.optString("state", "Bilinmeyen Şehir")
             } else {
-                "Unknown City"
+                "Bilinmeyen Şehir"
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error getting city name: ${e.message}")
-            "Unknown City"
+            Log.e(TAG, "Şehir adı alınırken hata oluştu: ${e.message}")
+            "Bilinmeyen Şehir"
         }
     }
 

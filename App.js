@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import NotificationService from './src/services/notification/notificationService';
 import { navigationRef } from './src/services/navigation/NavigationService';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform, NativeEventEmitter, NativeModules } from 'react-native';
 
 import HomeScreen from './src/screens/HomeScreen';
 import TutorialScreen from './src/screens/TutorialScreen';
@@ -23,42 +20,16 @@ import SettingsScreen from './src/screens/SettingsScreen';
 const Stack = createNativeStackNavigator();
 
 const App = () => {
-  const [isTutorialShown, setIsTutorialShown] = useState(false);
 
-  useEffect(() => {
-    const checkTutorialStatus = async () => {
-      const tutorialStatus = await AsyncStorage.getItem('tutorialShown');
-      if (tutorialStatus === 'true') {
-        setIsTutorialShown(true);
-      } else {
-        setIsTutorialShown(false);
-      }
-    };
-    checkTutorialStatus();
-  }, []);
-
-  // useEffect(() => {
-  //   NotificationService.init();
-
-
-  // }, []);
-
-  const handleTutorialComplete = async () => {
-    await AsyncStorage.setItem('tutorialShown', 'true');
-    setIsTutorialShown(true)
-  }
 
   return (
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator>
-        {!isTutorialShown && (
-          <Stack.Screen
-            name="Tutorial"
-            options={{headerShown: false}}
-          >
-            {(props) => <TutorialScreen {...props} onComplete={handleTutorialComplete} />}
-          </Stack.Screen>
-        )}
+        <Stack.Screen
+          options={{headerShown: false}}
+          name="TutorialScreen"
+          component={TutorialScreen}
+        />
         <Stack.Screen
           options={{headerShown: false}}
           name="Home"
