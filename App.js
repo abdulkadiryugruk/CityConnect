@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { DeviceEventEmitter } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React, {useEffect, useState, useRef} from 'react';
+import {DeviceEventEmitter} from 'react-native';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import HomeScreen from './src/screens/HomeScreen';
@@ -16,6 +16,7 @@ import YourCityScreen from './src/screens/YourCityScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import PermissionsScreen from './src/screens/settingsScreens/PermissionsScreen';
 import AboutScreen from './src/screens/settingsScreens/AboutScreen';
+import OncomingScreen from './src/screens/settingsScreens/OncomingScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -26,11 +27,11 @@ const App = () => {
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
       'NavigateToScreen',
-      (event) => {
+      event => {
         if (event.screen === 'YourCityScreen' && navigationRef.current) {
           navigationRef.current.navigate('YourCityScreen');
         }
-      }
+      },
     );
 
     return () => subscription.remove();
@@ -61,8 +62,8 @@ const App = () => {
   return (
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
-      initialRouteName={isFirstLaunch ? "TutorialScreen" : "Home"}>
-      {isFirstLaunch && (
+        initialRouteName={isFirstLaunch ? 'TutorialScreen' : 'Home'}>
+        {isFirstLaunch && (
           <Stack.Screen
             options={{headerShown: false}}
             name="TutorialScreen"
@@ -119,12 +120,16 @@ const App = () => {
           name="PermissionsScreen"
           component={PermissionsScreen}
         />
-                <Stack.Screen
+        <Stack.Screen
           options={{headerShown: false}}
           name="AboutScreen"
           component={AboutScreen}
         />
-
+        <Stack.Screen
+          options={{headerShown: false}}
+          name="OncomingScreen"
+          component={OncomingScreen}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

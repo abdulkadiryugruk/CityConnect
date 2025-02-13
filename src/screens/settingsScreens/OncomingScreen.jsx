@@ -1,8 +1,8 @@
 import React from 'react';
-import {StyleSheet, Text, View, TouchableOpacity, Linking} from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Linking } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const AboutScreen = ({navigation}) => {
+const OncomingScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.backgroundTop}>
@@ -14,49 +14,26 @@ const AboutScreen = ({navigation}) => {
               name="trending-flat"
               size={24}
               color="#fff"
-              style={{transform: [{rotate: '180deg'}]}}
+              style={{ transform: [{ rotate: '180deg' }] }}
             />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Hakkında</Text>
+          <Text style={styles.headerTitle}>Gelecek Yenilikler</Text>
           <View style={styles.rightIcon} />
         </View>
       </View>
+
       <View style={styles.backgroundBottom}>
         <View style={styles.backgroundTopRight}></View>
         <View style={styles.body}>
-          <Text style={styles.title}>CityConnect</Text>
-          <Text style={styles.version}>Sürüm: 1.0.0</Text>
+          
+          {/* Gelecek Yenilikler */}
+          <Text style={styles.title}>Gelecek Yenilikler</Text>
           <Text style={styles.description}>
-            CityConnect, telefon rehberinizdeki kişileri, şehirlere göre
-            organize etmenize yardımcı olur. Ayrıca, şehir değiştirildiğinde
-            bildirim göndererek sizi bilgilendirir.
+            - Konum tabanlı bildirimler daha hassas hale getirilecek.{"\n"}{"\n"}
+            - Şehir değiştirme bildirimlerinde kullanıcı tercihlerine göre özelleştirme imkanı.{"\n"}{"\n"}
+            - Kullanıcı geri bildirimlerine göre uygulama arayüzü ve işlevselliği iyileştirilecek.{"\n"}{"\n"}
+            - Tema seçenekleri eklenecek. {"\n"}{"\n"}
           </Text>
-          <Text style={styles.sectionTitle}>İletişim & Destek</Text>
-          <TouchableOpacity
-            onPress={() =>
-              Linking.openURL('mailto:cityconnectdestek@gmail.com')
-            }>
-            <Text style={styles.link}>📧 cityconnectdestek@gmail.com</Text>
-          </TouchableOpacity>
-          {/* <TouchableOpacity onPress={() => Linking.openURL('https://cityconnect.com')}>
-          <Text style={styles.link}>🌐 Web Sitesi</Text>
-        </TouchableOpacity> */}
-          <TouchableOpacity
-            onPress={() =>
-              Linking.openURL(
-                'https://github.com/abdulkadiryugruk/CityConnect-policy/blob/main/privacy-policy.md',
-              )
-            }>
-            <Text style={styles.privacyLink}>📜 Gizlilik Politikası</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() =>
-              Linking.openURL(
-                'https://github.com/abdulkadiryugruk/CityConnect-policy/blob/main/terms-of-use.md',
-              )
-            }>
-            <Text style={styles.privacyLink}>📜 Kullanım Koşulları</Text>
-          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -73,12 +50,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
   },
-
   title: {
-    fontSize: 24,
+    fontSize: 40,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 5,
+    marginBottom: 20,
   },
   version: {
     fontSize: 16,
@@ -86,10 +62,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   description: {
-    fontSize: 16,
-    textAlign: 'center',
+    fontSize: 20,
+    textAlign: 'left',
     color: '#444',
     marginBottom: 20,
+	width:'90%',
   },
   sectionTitle: {
     fontSize: 18,
@@ -106,10 +83,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#ff6347',
     marginTop: 20,
-  },
-  top: {
-    width: '100%',
-    height: '50%',
   },
   backgroundTop: {
     width: '100%',
@@ -165,4 +138,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AboutScreen;
+export default OncomingScreen;

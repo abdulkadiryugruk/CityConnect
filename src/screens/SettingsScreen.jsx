@@ -18,7 +18,7 @@ const SettingsScreen = ({navigation}) => {
               style={{transform: [{rotate: '180deg'}]}}
             />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}></Text>
+          <Text style={styles.headerTitle}>Ayarlar</Text>
           <View style={styles.rightIcon} />
         </View>
       </View>
@@ -36,6 +36,10 @@ const SettingsScreen = ({navigation}) => {
           <CustomButton
             buttonText="Hakkında"
             pressed={() => navigation.navigate('AboutScreen')}
+          />
+          <CustomButton
+            buttonText="Gelecek Yenilikler!"
+            pressed={() => navigation.navigate('OncomingScreen')}
           />
         </View>
       </View>
