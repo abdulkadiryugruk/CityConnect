@@ -1,6 +1,6 @@
 # Gizlilik Politikası  
 
-**Son Güncelleme: [Tarih]**  
+**Son Güncelleme: [14.02.2025]**  
 
 CityConnect uygulaması, kullanıcı gizliliğini önemser.  
 
