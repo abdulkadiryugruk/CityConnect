@@ -1,69 +1,82 @@
 package com.cityConnect
 
-
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
-import android.provider.Settings
+import android.net.Uri
+import android.util.Log
+import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
-import com.facebook.react.bridge.Promise
 
 class XiaomiSettingsModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
+
     override fun getName() = "XiaomiSettings"
 
     @ReactMethod
     fun openAutoStartSettings(promise: Promise) {
-        val context = currentActivity ?: reactApplicationContext
         try {
-            // MIUI için farklı intent yollarını dene
-            val possibleIntents = arrayOf(
-                // Yol 1: Uygulamalar > İzinler > Arka planda otomatik başlatma
-                Intent().apply {
-                    component = android.content.ComponentName(
-                        "com.miui.securitycenter",
-                        "com.miui.permcenter.autostart.AutoStartManagementActivity"
-                    )
-                },
-                // Yol 2: Uygulamalar > Uygulamaları yönet > Arka planda otomatik başlatma
-                Intent().apply {
-                    component = android.content.ComponentName(
-                        "com.miui.securitycenter",
-                        "com.miui.permcenter.permissions.PermissionsEditorActivity"
-                    )
-                },
-                // Yedek yol: Güvenlik uygulaması
-                Intent().apply {
-                    component = android.content.ComponentName(
-                        "com.miui.securitycenter",
-                        "com.miui.securityscan.MainActivity"
-                    )
-                }
+            val intent = Intent()
+            intent.component = ComponentName(
+                "com.miui.securitycenter",
+                "com.miui.permcenter.autostart.AutoStartManagementActivity"
             )
-
-            // Intentleri sırayla dene
-            var activityStarted = false
-            for (intent in possibleIntents) {
-                try {
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    context.startActivity(intent)
-                    activityStarted = true
-                    break
-                } catch (e: Exception) {
-                    continue
-                }
-            }
-
-            // Eğer hiçbir intent çalışmazsa
-            if (!activityStarted) {
-                // Genel uygulama ayarlarını aç
-                val intent = Intent(Settings.ACTION_APPLICATION_SETTINGS)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                context.startActivity(intent)
-            }
-
+            getCurrentActivity()?.startActivity(intent)
             promise.resolve(true)
         } catch (e: Exception) {
-            promise.reject("ERROR", "Ayarlar açılırken hata oluştu: ${e.message}")
+            // Alternatif yolu dene
+            try {
+                val intent = Intent()
+                intent.component = ComponentName(
+                    "com.miui.securitycenter",
+                    "com.miui.permcenter.autostart.AutoStartManagementActivity"
+                )
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                reactApplicationContext.startActivity(intent)
+                promise.resolve(true)
+            } catch (e2: Exception) {
+                promise.reject("ERROR", "Both attempts to open settings failed: ${e.message}, ${e2.message}")
+            }
         }
+    }
+
+@ReactMethod
+fun checkAutoStartPermission(promise: Promise) {
+    try {
+        val context = reactApplicationContext
+        val packageName = context.packageName
+        val autoStartEnabled = isAutoStartEnabled(context, packageName)
+        promise.resolve(autoStartEnabled)
+    } catch (e: Exception) {
+        promise.reject("ERROR", "Failed to check autostart permission: ${e.message}")
+    }
+}
+
+    private fun isAutoStartEnabled(context: Context, packageName: String): Boolean {
+        try {
+            val contentResolver = context.contentResolver
+            val uri = Uri.parse("content://com.miui.securitycenter.autostart/state")
+            val cursor = contentResolver.query(
+                uri,
+                null,
+                "package_name=?",
+                arrayOf(packageName),
+                null
+            )
+            
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    val stateIndex = it.getColumnIndex("state")
+                    if (stateIndex != -1) {
+                        return it.getInt(stateIndex) == 1
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("XiaomiSettings", "AutoStart permission check failed", e)
+        }
+        
+        return false
     }
 }

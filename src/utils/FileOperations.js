@@ -10,6 +10,7 @@ const FileOperations = {
 	  try {
 		await RNFS.writeFile(filePath, jsonData, 'utf8');
 		console.log(`${fileName} başarıyla kaydedildi.`);
+		console.log()
 		return true;
 	  } catch (error) {
 		console.error(`${fileName} dosyasına yazılamadı:`, error);
@@ -48,6 +49,7 @@ const FileOperations = {
 		throw error;
 	  }
 	},
+	
   };
 
 export default FileOperations;

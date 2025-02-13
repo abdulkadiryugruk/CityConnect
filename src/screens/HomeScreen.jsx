@@ -1,22 +1,21 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-shadow */
 /* eslint-disable react-native/no-inline-styles */
-import {Button, StyleSheet, Text, View, Alert, Image, Touchable, TouchableOpacity, Linking} from 'react-native';
-import React, {useState, useCallback, useEffect} from 'react';
-import CustomButton from '../components/CustomButton';
+import {Button, StyleSheet, Text, View, Alert, Image, Touchable, TouchableOpacity} from 'react-native';
+import React, {useState, useEffect} from 'react';
 import {Dimensions} from 'react-native';
-import RNFS from 'react-native-fs';
-import citiesData from '../data/countries/Turkey/Cities.json';
-import { handleScanContacts } from '../utils/ContactHandler';
-import FileOperations from '../utils/FileOperations';
-import {requestContactPermission} from './permissions/ContactsPermission';
-import NotificationPermissionManager  from './permissions/NotificationPermission';
-import {requestLocationPermission} from './permissions/LocationPermission';
-import requestBatteryOptimizationPermission  from './permissions/BatteryOptimizationPermission';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import CustomButton from '../components/CustomButton';
+//TODO dosya islemleri
+import FileOperations from '../utils/FileOperations';
+import RNFS from 'react-native-fs';
 
-import { openXiaomiAutoStartSettings, handleOpenSettings } from './permissions/XiaomiSettings';
-
+import { handleScanContacts } from '../utils/ContactHandler';
+import {requestContactPermission} from '../permissions/ContactsPermission';
+import  {NotificationPermissionManager}  from '../permissions/NotificationPermission';
+import {requestLocationPermission} from '../permissions/LocationPermission';
+import requestBatteryOptimizationPermission  from '../permissions/BatteryOptimizationPermission';
+import { checkAndHandleAutoStartPermission } from '../permissions/XiaomiSettings';
 
 const {width} = Dimensions.get('window');
 const dynamicFontSize = width * 0.08;
@@ -31,8 +30,9 @@ const HomeScreen = ({navigation}) => {
       await FileOperations.initializeCitiesFile();
       // 📌 Rehber erisim izni
       await requestContactPermission();
+      console.log()
       // 📌 Bildirim gonderme izni
-      await checkPermissionAndStartNotifications();
+      await NotificationPermissionManager.checkPermission(setHasPermission);
       // 📌 Konum erisimi izni
       const isLocationGranted = await requestLocationPermission();
       if (!isLocationGranted) {
@@ -41,114 +41,13 @@ const HomeScreen = ({navigation}) => {
       // 📌 Pil optimizasyon ayarlarını
       await requestBatteryOptimizationPermission();
       // 📌 Xiaomi arkaplan baslatma
-      await handleOpenSettings();
+      await checkAndHandleAutoStartPermission();
+      
     };
+
     initializeApp();
   }, []);
 
-  const checkPermissionAndStartNotifications = async () => {
-    try {
-      const permission = await NotificationPermissionManager.checkPermission();
-      setHasPermission(permission);
-
-      if (permission) {
-      } else {
-        const granted = await NotificationPermissionManager.requestPermission();
-        setHasPermission(granted);
-
-        if (granted) {
-        } else {
-                console.log('Rehber erişimi reddedildi');
-                Alert.alert(
-                  'Bildirim İzni Gerekli',
-                  'Uygulamanın düzgün çalışması için bildirim erişimine ihtiyacımız var. Lütfen ayarlardan izin verin.',
-                  [
-                    {
-                      text: 'İptal',
-                      style: 'cancel',
-                    },
-                    {
-                      text: 'Ayarlara Git',
-                      onPress: () => Linking.openSettings(),
-                    },
-                  ],
-                );
-                return null;
-              }
-      }
-    } catch (error) {
-      console.error('İzin kontrolü hatası:', error);
-    }
-  };
-
-
-  // const assignContactsToCities = (contacts, citiesData) =>
-  //   citiesData.cities.map(city => ({
-  //     ...city,
-  //     people: [
-  //       ...city.people,
-  //       ...contacts.filter(contact =>
-  //         contact.fullName &&
-  //         city.name &&
-  //         contact.fullName.toLowerCase().includes(city.name.toLowerCase()) &&
-  //         !city.people.some(existing => existing.fullName === contact.fullName)
-  //       ),
-  //     ],
-  //   }));
-
-
-  // const handleScanContacts = useCallback(async () => {
-  //   if (isScanning) return;
-
-  //   setIsScanning(true);
-  //   try {
-  //     const contacts = await requestContactPermission();
-  //     if (!contacts) {
-  //       Alert.alert(
-  //         'İzin Gerekli',
-  //         'Rehbere erişim izni olmadan bu işlemi gerçekleştiremeyiz.',
-  //         [
-  //           {
-  //             text: 'Tamam',
-  //             onPress: () => setIsScanning(false),
-  //           },
-  //         ],
-  //       );
-  //       return;
-  //     }
-  //     if (contacts.length === 0) {
-  //       Alert.alert('Bilgi', 'Rehberinizde kayıtlı kişi bulunamadı.');
-  //       return;
-  //     }
-  //     const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
-  //     const fileExists = await RNFS.exists(filePath);
-  //     let citiesData = { cities: [] };
-
-  //     if (fileExists) {
-  //       const fileContent = await RNFS.readFile(filePath, 'utf8');
-  //       citiesData = JSON.parse(fileContent);
-  //     } else {
-  //       citiesData = { cities: [] };
-  //     }
-
-  //     const updatedCities = assignContactsToCities(contacts, citiesData);
-  //     const saveSuccess = await FileOperations.saveUpdatedCitiesToFile(
-  //       updatedCities,
-  //       'UserCities.json',
-  //     );
-
-  //     if (saveSuccess) {
-  //       Alert.alert('Başarılı ✅', 'Rehber tarandı ve kişiler eklendi.', [{ text: 'Tamam', style: 'default' }]);
-  //     } else {
-  //       Alert.alert('Hata', 'Veriler kaydedilirken bir sorun oluştu.');
-  //     }
-  //   } catch (error) {
-  //     console.error('Rehber tarama sırasında hata oluştu:', error);
-  //     Alert.alert('Hata', 'Bir sorun oluştu, lütfen tekrar deneyin.');
-  //   } finally {
-  //     setIsScanning(false);
-  //   }
-  // }, [isScanning]);
 
   return (
     <View style={styles.container}>
@@ -188,7 +87,7 @@ const HomeScreen = ({navigation}) => {
             pressed={() => navigation.navigate('EditScreen')}
           />
           <CustomButton
-            buttonText="sehir"
+            buttonText="Son Şehir Bilgisi"
             pressed={() => navigation.navigate('YourCityScreen')}
           />
         </View>

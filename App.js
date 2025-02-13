@@ -13,6 +13,7 @@ import ContactAndCityScreen from './src/screens/selectPeople/ContactAndCityScree
 import TutorialBackground from './src/screens/TutorialBackground';
 import YourCityScreen from './src/screens/YourCityScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import PermissionsScreen from './src/screens/settingsScreens/PermissionsScreen';
 
 
 
@@ -75,6 +76,12 @@ const App = () => {
           name="SettingsScreen"
           component={SettingsScreen}
         />
+        <Stack.Screen
+          options={{headerShown: false}}
+          name="PermissionsScreen"
+          component={PermissionsScreen}
+        />
+
       </Stack.Navigator>
     </NavigationContainer>
   );

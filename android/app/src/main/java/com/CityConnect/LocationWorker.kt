@@ -177,7 +177,7 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Corouti
         WorkManager.getInstance(applicationContext)
             .enqueueUniqueWork(
                 CityCheckWorker.WORK_NAME,
-                ExistingWorkPolicy.REPLACE,  // Eğer çalışıyorsa yenisiyle değiştir
+                ExistingWorkPolicy.REPLACE,
                 cityCheckWorkRequest
             )
     }

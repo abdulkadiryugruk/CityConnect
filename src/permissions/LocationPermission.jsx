@@ -23,10 +23,9 @@ export const requestLocationPermission = async () => {
       if (grantedForeground !== PermissionsAndroid.RESULTS.GRANTED) {
 
                 console.log('Rehber erişimi reddedildi');
-                // İzin reddedildiğinde kullanıcıya daha açıklayıcı bir mesaj göster
                 Alert.alert(
                   'Konum İzni Gerekli',
-                  'Uygulamanın düzgün çalışması için konum erişimine ihtiyacımız var. Lütfen ayarlardan izin verin.',
+                  'Uygulamanın düzgün çalışması için konum erişimine ihtiyacımız var. Lütfen ayarlardan "Her zaman izin ver"seçeneğini seçin.',
                   [
                     {
                       text: 'İptal',

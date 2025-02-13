@@ -2,7 +2,7 @@
 import React, {useState, useCallback, useEffect} from 'react';
 import {Alert,Linking} from 'react-native';
 import RNFS from 'react-native-fs';
-import { requestContactPermission } from '../screens/permissions/ContactsPermission'; 
+import { requestContactPermission } from '../permissions/ContactsPermission'; 
 import citiesData from '../data/countries/Turkey/Cities.json'; // Şehir verisi
 import FileOperations from './FileOperations';
 

@@ -1,4 +1,4 @@
-// XiaomiSettingsPackage.kt
+
 package com.cityConnect
 
 import com.facebook.react.ReactPackage

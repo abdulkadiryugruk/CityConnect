@@ -1,19 +1,19 @@
 import {StyleSheet, Text, View, FlatList, TouchableOpacity} from 'react-native';
 import React, {useState, useEffect} from 'react';
-import RNFS from 'react-native-fs'; // Dosya sistemi için
+import RNFS from 'react-native-fs';
 import CustomTextInput from '../../components/CustomTextInput';
-import Contacts from 'react-native-contacts'; // Rehberdeki kişileri almak için
-import {useRoute, useNavigation, useIsFocused} from '@react-navigation/native'; // Parametre almak için
+import Contacts from 'react-native-contacts';
+import {useRoute, useNavigation, useIsFocused} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const SelectContactScreen = () => {
   const route = useRoute(); // Ekrana gönderilen parametreyi al
   const navigation = useNavigation();
   const isFocused = useIsFocused(); // Sayfanın odaklanmasını takip eder
-  const [peoples, setPeoples] = useState([]); // Rehberdeki kişiler
-  const [unmatchedPeoples, setUnmatchedPeoples] = useState([]); // Eşleşmeyen kişiler
+  const [peoples, setPeoples] = useState([]);
+  const [unmatchedPeoples, setUnmatchedPeoples] = useState([]);
   const [search, setSearch] = useState(''); // Arama metni
-  const [citiesData, setCitiesData] = useState([]); // UserCities.json verisi
+  const [citiesData, setCitiesData] = useState([]);
 
   useEffect(() => {
     if (isFocused) {
@@ -30,12 +30,11 @@ const SelectContactScreen = () => {
             if (!b.displayName) return -1;
             return a.displayName.localeCompare(b.displayName);
           });
-          setPeoples(sortedContacts); // Sıralanmış listeyi state'e ata
+          setPeoples(sortedContacts);
         } else {
           console.log('Rehber izni verilmedi');
         }
 
-        // UserCities.json dosyasındaki şehir ve kişileri yükle
         const filePath = RNFS.DocumentDirectoryPath + '/UserCities.json';
         const fileExists = await RNFS.exists(filePath);
 
@@ -52,10 +51,9 @@ const SelectContactScreen = () => {
     };
     loadPeopleFromFile();
   }
-  }, [isFocused]); // Bu useEffect sadece component mount edildiğinde çalışacak
+  }, [isFocused]);
 
   useEffect(() => {
-    // Rehberdeki kişilerle UserCities.json'daki kişileri karşılaştırarak eşleşmeyenleri ayıklıyoruz
     const unmatched = peoples.filter(
       person =>
         !citiesData.some(city =>
@@ -63,7 +61,7 @@ const SelectContactScreen = () => {
         ),
     );
     setUnmatchedPeoples(unmatched);
-  }, [peoples, citiesData]); // peoples ve citiesData değiştiğinde tekrar çalışacak
+  }, [peoples, citiesData]);
 
   const filteredUnmatchedPeoples = unmatchedPeoples.filter(
     person =>
@@ -71,7 +69,6 @@ const SelectContactScreen = () => {
       person.displayName.toLowerCase().includes(search?.toLowerCase() || ''),
   );
   useEffect(() => {
-    // Navigation options'a removeMatchedPerson fonksiyonunu ekle
     navigation.setOptions({
       removeMatchedPerson: (name) => {
         setUnmatchedPeoples(prev =>

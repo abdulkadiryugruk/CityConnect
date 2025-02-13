@@ -52,7 +52,7 @@ class MainApplication : Application(), ReactApplication {
             .build()
 
         // GPS kontrol worker'ı
-        val gpsCheckWorkRequest = PeriodicWorkRequestBuilder<GpsCheckWorker>(25, TimeUnit.MINUTES) //TODO surede degisiklik plani yapilacak
+        val gpsCheckWorkRequest = PeriodicWorkRequestBuilder<GpsCheckWorker>(15, TimeUnit.MINUTES) //TODO surede degisiklik plani yapilacak
             .setConstraints(constraints)
             .setInitialDelay(1, TimeUnit.MINUTES)
             .build()

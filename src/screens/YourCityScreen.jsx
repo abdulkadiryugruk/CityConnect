@@ -10,7 +10,6 @@ import {
 import RNFS from 'react-native-fs';
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {requestLocationPermission} from './permissions/LocationPermission';
 import { NativeModules } from 'react-native';
 
 
@@ -90,7 +89,7 @@ const YourCityScreen = () => {
               style={{transform: [{rotate: '180deg'}]}}
             />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{currentCity} Kişileri</Text>
+          <Text style={styles.headerTitle}>Bilinen Son Şehir {currentCity.toLocaleUpperCase("tr-TR")}</Text>
           <View style={styles.rightIcon} />
         </View>
       </View>

@@ -110,7 +110,7 @@ const CityandContactsScreen = () => {
               setSelectedPeoples([]); // Seçimleri temizle
 
               ToastAndroid.showWithGravityAndOffset(
-                `${selectedPeoples.length} kisi ${cityName.toLocaleUpperCase("tr-TR")} şehrine eklendi!`,
+                `${selectedPeoples.length} kişi ${cityName.toLocaleUpperCase("tr-TR")} şehrine eklendi!`,
                 ToastAndroid.LONG,
                 ToastAndroid.BOTTOM,
                 25,
