@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { navigationRef } from './src/services/navigation/NavigationService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import HomeScreen from './src/screens/HomeScreen';
 import TutorialScreen from './src/screens/TutorialScreen';
@@ -21,16 +22,41 @@ import PermissionsScreen from './src/screens/settingsScreens/PermissionsScreen';
 const Stack = createNativeStackNavigator();
 
 const App = () => {
+  const [isFirstLaunch, setIsFirstLaunch] = useState(null);
 
+  useEffect(() => {
+    checkIfFirstLaunch();
+  }, []);
+
+  const checkIfFirstLaunch = async () => {
+    try {
+      const hasLaunched = await AsyncStorage.getItem('hasLaunched');
+      if (hasLaunched === null) {
+        await AsyncStorage.setItem('hasLaunched', 'true');
+        setIsFirstLaunch(true);
+      } else {
+        setIsFirstLaunch(false);
+      }
+    } catch (error) {
+      setIsFirstLaunch(false);
+    }
+  };
+
+  if (isFirstLaunch === null) {
+    return null; // Ya da bir loading ekranı
+  }
 
   return (
     <NavigationContainer ref={navigationRef}>
-      <Stack.Navigator>
-        <Stack.Screen
-          options={{headerShown: false}}
-          name="TutorialScreen"
-          component={TutorialScreen}
-        />
+      <Stack.Navigator
+      initialRouteName={isFirstLaunch ? "TutorialScreen" : "Home"}>
+      {isFirstLaunch && (
+          <Stack.Screen
+            options={{headerShown: false}}
+            name="TutorialScreen"
+            component={TutorialScreen}
+          />
+        )}
         <Stack.Screen
           options={{headerShown: false}}
           name="Home"

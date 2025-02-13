@@ -17,7 +17,19 @@ export class NotificationPermissionManager {
 
         const isGranted = granted === PermissionsAndroid.RESULTS.GRANTED;
         console.log(isGranted ? 'Bildirim izni verildi.' : 'Bildirim izni reddedildi.');
-        setHasPermission(isGranted);  // Durumu güncelle
+        setHasPermission(isGranted);
+
+        if (!isGranted) {
+          Alert.alert(
+            'İzin Gerekli',
+            'Bildirim alabilmek için izin vermeniz gerekiyor. Ayarlardan değiştirebilirsiniz.',
+            [
+              { text: 'Vazgeç', style: 'cancel' },
+              { text: 'Ayarlara Git', onPress: () => Linking.openSettings() },
+            ]
+          );
+        }
+
         return isGranted;
       } catch (error) {
         console.error('Bildirim izni hatası:', error);

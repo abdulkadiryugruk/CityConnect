@@ -8,32 +8,38 @@ import { checkAndHandleAutoStartPermission } from '../../permissions/XiaomiSetti
 
 const PermissionsScreen = () => {
   const [expandedPermissions, setExpandedPermissions] = useState({});
+    const [hasPermission, setHasPermission] = useState(false);
+  
 
   const togglePermissions = (permissionName) => {
     setExpandedPermissions(prev => ({ ...prev, [permissionName]: !prev[permissionName] }));
   };
 
   const handlePermissionRequest = async (permission) => {
+    let granted = false; // Varsayılan olarak false
+  
     switch (permission) {
       case 'Rehber İzni':
-        await requestContactPermission();
+        granted = await requestContactPermission();
         break;
       case 'Bildirim İzni':
-        await NotificationPermissionManager.checkPermission();
+        granted = await NotificationPermissionManager.checkPermission(setHasPermission);
         break;
       case 'Konum İzni':
-        await requestLocationPermission();
+        granted = await requestLocationPermission();
         break;
       case 'Uygulama Kapalıyken Başlatma İzni':
-        await checkAndHandleAutoStartPermission();
+        granted = await checkAndHandleAutoStartPermission();
         break;
       default:
         break;
     }
+  
+    console.log(`${permission} durumu:`, granted);
   };
 
   const permissions = [
-    { name: 'Rehber İzni', description: 'Rehberinizdeki kişileri şehirlere entegre etmek için gerekli.' },
+    { name: 'Rehber İzni', description: 'Rehberinizdeki kişileri, şehirlere entegre etmek için gerekli.' },
     { name: 'Bildirim İzni', description: 'Bulunduğunuz şehirdeki kişileri bildirim olarak göndermek için gerekli.' },
     { name: 'Konum İzni', description: 'Hangi şehirde bulunduğunuzu tespit edebilmek için gerekli.' },
     { name: 'Uygulama Kapalıyken Başlatma İzni', description: 'Bazı cihazlarda uygulama kapalıyken de konum bilgisine erişerek bildirim gönderebilmek için gerekli.' },

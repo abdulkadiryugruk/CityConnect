@@ -2,6 +2,7 @@ package com.CityConnect
 
 import android.Manifest
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
@@ -24,6 +25,8 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Corouti
         private const val LAST_LATITUDE = "last_latitude"
         private const val LAST_LONGITUDE = "last_longitude"
         private const val DISTANCE_THRESHOLD = 15000 // 15 km 
+        private const val MAX_RETRIES = 3 // Maksimum yeniden deneme sayısı
+        private const val RETRY_DELAY = 10000L // Her deneme arasında 10 saniye bekle
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -86,19 +89,6 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Corouti
         }
     }
 
-    private suspend fun updateLocationAndCallApi(location: Location, sharedPrefs: android.content.SharedPreferences) {
-        // Yeni konumu kaydet
-        sharedPrefs.edit().apply {
-            putFloat(LAST_LATITUDE, location.latitude.toFloat())
-            putFloat(LAST_LONGITUDE, location.longitude.toFloat())
-            apply()
-        }
-
-        // Şehir adını al ve CityCheckWorker'ı başlat
-        val cityName = getCityName(location.latitude, location.longitude) ?: "Bilinmeyen Şehir"
-        startCityCheckWorker(cityName)
-    }
-
     private fun createOutputData(location: Location): Data {
         return workDataOf(
             "latitude" to location.latitude,
@@ -112,7 +102,7 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Corouti
             val networkLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
 
             if (networkLocation != null) {
-                val cityName = getCityName(networkLocation.latitude, networkLocation.longitude)
+                val cityName = getCityNameWithRetry(networkLocation.latitude, networkLocation.longitude)
                 Log.d(TAG, "Ağ konumu: ${networkLocation.latitude}, ${networkLocation.longitude}, şehir: $cityName")
                 Result.success(
                     workDataOf(
@@ -131,36 +121,64 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Corouti
         }
     }
 
-    private suspend fun getCityName(latitude: Double, longitude: Double): String? = withContext(Dispatchers.IO) {
-        return@withContext try {
-            val urlString = "https://photon.komoot.io/reverse?lat=$latitude&lon=$longitude"
-            val url = URL(urlString)
-            val connection = url.openConnection() as HttpURLConnection
-            connection.requestMethod = "GET"
-            connection.connectTimeout = 10000
-            connection.readTimeout = 10000
+    private suspend fun getCityNameWithRetry(latitude: Double, longitude: Double): String = withContext(Dispatchers.IO) {
+        var lastException: Exception? = null
+        
+        for (attempt in 1..MAX_RETRIES) {
+            try {
+                Log.d(TAG, "Şehir adı alma denemesi: $attempt")
+                
+                val urlString = "https://photon.komoot.io/reverse?lat=$latitude&lon=$longitude"
+                val url = URL(urlString)
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.connectTimeout = 10000
+                connection.readTimeout = 10000
 
-            val inputStream = connection.inputStream
-            val reader = BufferedReader(InputStreamReader(inputStream))
-            val response = reader.use { it.readText() }
+                val inputStream = connection.inputStream
+                val reader = BufferedReader(InputStreamReader(inputStream))
+                val response = reader.use { it.readText() }
 
-            // JSON yanıtını parse etme
-            val jsonObject = JSONObject(response)
-            val features = jsonObject.getJSONArray("features")
+                val jsonObject = JSONObject(response)
+                val features = jsonObject.getJSONArray("features")
 
-            if (features.length() > 0) {
-                val properties = features.getJSONObject(0).getJSONObject("properties")
-                properties.optString("state", "Bilinmeyen Şehir")
-            } else {
-                "Bilinmeyen Şehir"
+                if (features.length() > 0) {
+                    val properties = features.getJSONObject(0).getJSONObject("properties")
+                    return@withContext properties.optString("state", "Bilinmeyen Şehir")
+                }
+                
+                return@withContext "Bilinmeyen Şehir"
+                
+            } catch (e: Exception) {
+                lastException = e
+                Log.e(TAG, "Şehir adı alınırken hata oluştu (Deneme $attempt): ${e.message}")
+                
+                if (attempt < MAX_RETRIES) {
+                    delay(RETRY_DELAY)
+                    continue
+                }
             }
+        }
+
+        Log.e(TAG, "Tüm denemeler başarısız oldu. Son hata: ${lastException?.message}")
+        throw lastException ?: Exception("Şehir adı alınamadı")
+    }
+
+    private suspend fun updateLocationAndCallApi(location: Location, sharedPrefs: SharedPreferences) {
+        sharedPrefs.edit().apply {
+            putFloat(LAST_LATITUDE, location.latitude.toFloat())
+            putFloat(LAST_LONGITUDE, location.longitude.toFloat())
+            apply()
+        }
+
+        try {
+            val cityName = getCityNameWithRetry(location.latitude, location.longitude)
+            startCityCheckWorker(cityName)
         } catch (e: Exception) {
-            Log.e(TAG, "Şehir adı alınırken hata oluştu: ${e.message}")
-            "Bilinmeyen Şehir"
+            Log.e(TAG, "Konum güncellemesi başarısız oldu: ${e.message}")
         }
     }
 
-    // CityCheckWorker'ı başlatan metot
     private fun startCityCheckWorker(cityName: String) {
         val inputData = workDataOf("state" to cityName)
 

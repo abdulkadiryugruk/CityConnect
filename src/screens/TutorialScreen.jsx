@@ -23,13 +23,26 @@ const slides = [
   {
     id: '2',
     title: 'Temel Amaç',
-    description: 'Şehirdeki kişileri kaydeder ve size bildirim olarak hatırlatır.',
+    description: 'Rehberinizdeki kişileri istediğiniz şehirlere entegre ettikden sonra, konum değişikliğinizi algılayarak bulunduğunuz şehirdeki kişileri size bildirim olarak gönderir.',
     backgroundColor: '#a6e4d0',
   },
   {
     id: '3',
     title: 'Nasıl Kullanılır?',
-    description: 'Rehber ve konum izni ile size en iyi hizmeti sunar.',
+    description: `
+    1- Gerekli izinleri verin.(Ayarlar sekmesinden izinlerin ne için gerekli olduğunu detaylı öğrenebilirsiniz.
+
+    2- Rehberininizdeki kişileri şehirlere göre gruplandırınç "Rehberi Tara" butonuna tıklayarak otomatik olarak ekleyin. "Manuel Ekleme" kısmından da istediğiniz gibi değişiklikler yapabilirsiniz.
+
+    3- Cihazınızın 'Konum Servisi' açık olduğunda uygulamamız her 25 dakika da 1 bulunduğunuz şehre ekli kişiler varsa size bildirim olarak hatırlatır.
+
+    Bildirim gelmediği durumlar:
+    - Cihazınızın 'Konum Servisi' kapalı ise.
+    - Bildirim izni verilmemiş ise.
+    - Şehre kayıtlı kişi yok ise.
+    - uygulamaya arkaplanda çalışma izni verilmemiş ise.
+    - Şehir değişikliği olmamış ise(aynı şehirde iseniz, bildirim 1 kere gönderilir.).
+    `,
     backgroundColor: '#e9bcbe',
   },
 ];
@@ -54,7 +67,10 @@ const TutorialScreen = ({ navigation }) => {
     if (currentIndex < slides.length - 1) {
       flatListRef.current.scrollToIndex({ index: currentIndex + 1 });
     } else {
-      navigation.replace('Home');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Home' }],
+      });
     }
   };
 
@@ -156,18 +172,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingBottom: 50,
+    height:'80%',
   },
   title: {
-    fontSize: 28,
+    fontSize: 40,
     fontWeight: 'bold',
     color: '#333',
     marginTop: height * 0.05,
   },
   description: {
-    fontSize: 16,
+    fontSize: 19,
     color: '#555',
     marginTop: 10,
-    textAlign: 'center',
+    textAlign: 'left',
     paddingHorizontal: 20,
   },
   button: {
