@@ -30,9 +30,9 @@ npx react-native run-android
 |-----------|---------------|
 | ![Ana Ekran](screenshots/home.png) | ![Ayarlar](screenshots/settings.png) |
 
-## 📝 Lisans
+## 📝 Lisans  
 
-Bu proje ticari kullanım için açık kaynak değildir.  
+Bu proje **özel bir lisans** altındadır. Kodun veya yazılımın izinsiz kullanımı yasaktır.  
 Tüm hakları saklıdır.
 
 ## 📧 İletişim
