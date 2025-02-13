@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { DeviceEventEmitter } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { navigationRef } from './src/services/navigation/NavigationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import HomeScreen from './src/screens/HomeScreen';
@@ -15,14 +15,26 @@ import TutorialBackground from './src/screens/TutorialBackground';
 import YourCityScreen from './src/screens/YourCityScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import PermissionsScreen from './src/screens/settingsScreens/PermissionsScreen';
-
-
-
+import AboutScreen from './src/screens/settingsScreens/AboutScreen';
 
 const Stack = createNativeStackNavigator();
 
 const App = () => {
   const [isFirstLaunch, setIsFirstLaunch] = useState(null);
+  const navigationRef = useRef(null);
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      'NavigateToScreen',
+      (event) => {
+        if (event.screen === 'YourCityScreen' && navigationRef.current) {
+          navigationRef.current.navigate('YourCityScreen');
+        }
+      }
+    );
+
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     checkIfFirstLaunch();
@@ -43,7 +55,7 @@ const App = () => {
   };
 
   if (isFirstLaunch === null) {
-    return null; // Ya da bir loading ekranı
+    return null;
   }
 
   return (
@@ -106,6 +118,11 @@ const App = () => {
           options={{headerShown: false}}
           name="PermissionsScreen"
           component={PermissionsScreen}
+        />
+                <Stack.Screen
+          options={{headerShown: false}}
+          name="AboutScreen"
+          component={AboutScreen}
         />
 
       </Stack.Navigator>

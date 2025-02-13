@@ -1,4 +1,3 @@
-/* eslint-disable no-mixed-spaces-and-tabs */
 import React from 'react';
 import {StyleSheet, Text, View, TouchableOpacity} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -27,16 +26,17 @@ const SettingsScreen = ({navigation}) => {
         <View style={styles.backgroundTopRight}></View>
         <View style={styles.body}>
           <CustomButton
-            buttonText="Tanitim Ekrani"
+            buttonText="Tanıtım Ekranı"
             pressed={() => navigation.navigate('TutorialScreen')}
           />
           <CustomButton
             buttonText="Gerekli İzinler"
             pressed={() => navigation.navigate('PermissionsScreen')}
           />
-          <View style={styles.dahasonra}>
-            <Text style={styles.text}>daha sonra ayarlanacak</Text>
-          </View>
+          <CustomButton
+            buttonText="Hakkında"
+            pressed={() => navigation.navigate('AboutScreen')}
+          />
         </View>
       </View>
     </View>

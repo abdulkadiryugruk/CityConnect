@@ -34,7 +34,7 @@ const slides = [
 
     2- Rehberininizdeki kişileri şehirlere göre gruplandırınç "Rehberi Tara" butonuna tıklayarak otomatik olarak ekleyin. "Manuel Ekleme" kısmından da istediğiniz gibi değişiklikler yapabilirsiniz.
 
-    3- Cihazınızın 'Konum Servisi' açık olduğunda uygulamamız her 25 dakika da 1 bulunduğunuz şehre ekli kişiler varsa size bildirim olarak hatırlatır.
+    3- Cihazınızın 'Konum Servisi' açık olduğunda uygulamamız her 15 dakika da 1 bulunduğunuz şehre ekli kişiler varsa size bildirim olarak hatırlatır.
 
     Bildirim gelmediği durumlar:
     - Cihazınızın 'Konum Servisi' kapalı ise.

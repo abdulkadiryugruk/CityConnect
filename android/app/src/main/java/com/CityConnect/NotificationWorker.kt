@@ -2,7 +2,9 @@ package com.CityConnect
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.work.Worker
@@ -45,6 +47,22 @@ class NotificationWorker(context: Context, workerParams: WorkerParameters) : Wor
     private fun showNotification(title: String, message: String) {
         val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+        // React Native ana aktiviteyi başlatacak Intent'i oluştur
+        val intent = applicationContext.packageManager
+            .getLaunchIntentForPackage(applicationContext.packageName)?.apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                // React Native ekranına yönlendirmek için extra data ekle
+                putExtra("screen", "YourCityScreen")
+            }
+
+        // PendingIntent oluştur
+        val pendingIntent = PendingIntent.getActivity(
+            applicationContext,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT)
             notificationManager.createNotificationChannel(channel)
@@ -56,6 +74,7 @@ class NotificationWorker(context: Context, workerParams: WorkerParameters) : Wor
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
+            .setContentIntent(pendingIntent) // PendingIntent'i ekle
 
         notificationManager.notify(1, notificationBuilder.build())
     }

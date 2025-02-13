@@ -26,7 +26,7 @@ class LocationWorker(context: Context, workerParams: WorkerParameters) : Corouti
         private const val LAST_LONGITUDE = "last_longitude"
         private const val DISTANCE_THRESHOLD = 15000 // 15 km 
         private const val MAX_RETRIES = 3 // Maksimum yeniden deneme sayısı
-        private const val RETRY_DELAY = 10000L // Her deneme arasında 10 saniye bekle
+        private const val RETRY_DELAY = 15000L // Her deneme arasında 10 saniye bekle
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
