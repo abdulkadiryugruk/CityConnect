@@ -1,133 +1,107 @@
-import {Button, StyleSheet, Text, View, Alert} from 'react-native';
-import React from 'react';
-import CustomButton from '../components/CustomButton';
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-shadow */
+/* eslint-disable react-native/no-inline-styles */
+import {Button, StyleSheet, Text, View, Alert, Image, Touchable, TouchableOpacity} from 'react-native';
+import React, {useState, useEffect} from 'react';
 import {Dimensions} from 'react-native';
-import RNFS from 'react-native-fs'; // RNFS'yi içe aktar
-import {requestContactPermission} from './permissions/ContactsPermission';
-import citiesData from '../data/countries/Turkey/Cities.json'; // Cities.json dosyası
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import CustomButton from '../components/CustomButton';
+//TODO dosya islemleri
+import FileOperations from '../utils/FileOperations';
+import RNFS from 'react-native-fs';
+
+import { handleScanContacts } from '../utils/ContactHandler';
+import {requestContactPermission} from '../permissions/ContactsPermission';
+import  {NotificationPermissionManager}  from '../permissions/NotificationPermission';
+import {requestLocationPermission} from '../permissions/LocationPermission';
+import requestBatteryOptimizationPermission  from '../permissions/BatteryOptimizationPermission';
+import { checkAndHandleAutoStartPermission } from '../permissions/XiaomiSettings';
 
 const {width} = Dimensions.get('window');
 const dynamicFontSize = width * 0.08;
 
-// Dosya yazma fonksiyonu
-const saveUpdatedCitiesToFile = (updatedCities, fileName) => {
-  const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
-  const jsonData = JSON.stringify({cities: updatedCities}, null, 2);
-
-  RNFS.writeFile(filePath, jsonData, 'utf8')
-    .then(() => {
-      console.log(`${fileName} başarıyla kaydedildi.`);
-    })
-    .catch(error => {
-      console.error(`${fileName} dosyasına yazılamadı:`, error);
-    });
-};
-
-// Rehber kişilerini şehirlerle eşleştirme fonksiyonu
-const assignContactsToCities = contacts => {
-  const updatedCities = citiesData.cities.map(city => {
-    const matchedContacts = contacts.filter(
-      contact =>
-        contact.fullName &&
-        city.name &&
-        contact.fullName.toLowerCase().includes(city.name.toLowerCase())
-    );
-    return {
-      ...city,
-      people: matchedContacts,
-    };
-  });
-
-  return updatedCities;
-};
-
-
-// Rehber tarama işlemi
-const handleScanContacts = async () => {
-  try {
-    const contacts = await requestContactPermission();
-    if (contacts && contacts.length > 0) {
-      const updatedCities = assignContactsToCities(contacts);
-      saveUpdatedCitiesToFile(updatedCities, 'UserCities.json');
-      Alert.alert('Başarılı', 'Rehber tarandı ve kişiler eklendi.');
-    } else {
-      Alert.alert('Bilgi', 'Rehberde şehir ismi içeren kişi bulunamadı.');
-    }
-  } catch (error) {
-    console.error('Rehber tarama sırasında hata oluştu:', error);
-    Alert.alert('Hata', 'Bir sorun oluştu, lütfen tekrar deneyin.');
-  }
-};
-
-// Önbelleği temizleme fonksiyonu
-const clearCache = async () => {
-  try {
-    const filePath = `${RNFS.DocumentDirectoryPath}/UserCities.json`;
-
-    // Dosya mevcut mu kontrol et
-    const fileExists = await RNFS.exists(filePath);
-
-    if (fileExists) {
-      // Dosyayı sil
-      await RNFS.unlink(filePath);
-      Alert.alert('Başarılı', 'Önbellek temizlendi.');
-    } else {
-      Alert.alert('Bilgi', 'Önbellek dosyası bulunamadı.');
-    }
-  } catch (error) {
-    console.error('Önbellek temizlenirken hata oluştu:', error);
-    Alert.alert('Hata', 'Önbellek temizlenirken bir hata oluştu.');
-  }
-};
-
 const HomeScreen = ({navigation}) => {
+  const [isScanning, setIsScanning] = useState(false);
+  const [hasPermission, setHasPermission] = useState(false);
+
+  useEffect(() => {
+    const initializeApp = async () => {
+      // 📌 dosya erisim izni
+      await FileOperations.initializeCitiesFile();
+      // 📌 Rehber erisim izni
+      await requestContactPermission();
+      console.log()
+      // 📌 Bildirim gonderme izni
+      await NotificationPermissionManager.checkPermission(setHasPermission);
+      // 📌 Konum erisimi izni
+      const isLocationGranted = await requestLocationPermission();
+      if (!isLocationGranted) {
+        Alert.alert("Uyarı", "Konum izni alınamadı.");
+      }
+      // 📌 Pil optimizasyon ayarlarını
+      await requestBatteryOptimizationPermission();
+      // 📌 Xiaomi arkaplan baslatma
+      await checkAndHandleAutoStartPermission();
+      
+    };
+
+    initializeApp();
+  }, []);
+
+
   return (
     <View style={styles.container}>
-      {/* Önbelleği Temizle butonu */}
-      <Button
-        title="Önbelleği Temizle"
-        onPress={clearCache} // Butona tıklanınca clearCache fonksiyonu çalışacak
+      <Image
+        style={styles.backgroundImg}
+        source={require('../images/HomeBackground.png')}
       />
-
-      {/* Rehberi Tara butonu */}
-      <CustomButton
-        customStyle={{marginVertical: 30}}
-        buttonText="Rehberi Tara"
-        pressed={handleScanContacts}
-      />
-
-      {/* Manuel Ekleme */}
-      <View style={styles.manuelAddContainer}>
-        <View style={styles.manuelAddLabel}>
-          <Text style={styles.labelText}>Manuel Ekleme</Text>
+      <View style={styles.lacivert}>
+        <View style={styles.containerBox}>
+          <CustomButton
+            customStyle={{marginVertical: 30}}
+            buttonText={isScanning ? 'Taranıyor...' : 'Rehberi Tara'}
+            pressed={()=>handleScanContacts(setIsScanning, isScanning)}
+            disabled={isScanning}
+          />
+          <View style={styles.manuelAddContainer}>
+            <View style={styles.manuelAddLabel}>
+              <Text style={styles.labelText}>Manuel Ekleme</Text>
+            </View>
+            <View style={styles.manuelAddContent}>
+              <CustomButton
+                customStyle={{height: 40, marginVertical: 25}}
+                textStyle={{fontSize: 20}}
+                buttonText="Şehir Seç"
+                pressed={() => navigation.navigate('SelectCityScreen')}
+              />
+              <CustomButton
+                customStyle={{height: 40, marginBottom: 20, marginVertical: 0}}
+                textStyle={{fontSize: 20}}
+                buttonText="Kişi Seç"
+                pressed={() => navigation.navigate('SelectContactScreen')}
+              />
+            </View>
+          </View>
+          <CustomButton
+            buttonText="Düzenle"
+            pressed={() => navigation.navigate('EditScreen')}
+          />
+          <CustomButton
+            buttonText="Son Şehir Bilgisi"
+            pressed={() => navigation.navigate('YourCityScreen')}
+          />
         </View>
-        <View style={styles.manuelAddContent}>
-          <CustomButton
-            customStyle={{height: 40, marginVertical: 25}}
-            textStyle={{fontSize: 20}}
-            buttonText="Şehir Seç"
-            pressed={() => navigation.navigate('SelectCityScreen')}
-          />
-          <CustomButton
-            customStyle={{height: 40, marginBottom: 20, marginVertical: 0}}
-            textStyle={{fontSize: 20}}
-            buttonText="Kişi Seç"
-            pressed={() => navigation.navigate('SelectContactScreen')}
-
-          />
+        <View style={styles.bottomBar}>
+          <TouchableOpacity style={styles.Settings}
+          onPress={()=> navigation.navigate('SettingsScreen')}
+          >
+          <Icon
+          name="settings"
+          size={24}
+          color="#fff"/>
+          </TouchableOpacity>
         </View>
       </View>
-
-      {/* Düzenle butonu */}
-      <CustomButton
-        buttonText="Düzenle"
-        pressed={() => navigation.navigate('EditScreen')}
-      />
-
-      <Button
-        title="Go to Tutorial"
-        onPress={() => navigation.navigate('Tutorial')}
-      />
     </View>
   );
 };
@@ -137,9 +111,29 @@ export default HomeScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
+  },
+  backgroundImg: {
+    width: '100%',
+    height: '22%',
+    borderBottomLeftRadius: 85,
+  },
+  lacivert: {
+    width: '100%',
+    height: '78%',
+    backgroundColor: '#0c0d34',
+    bottom: 0,
+    position: 'absolute',
+  },
+  containerBox: {
+    width: '100%',
+    height: '85%',
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white',
+    top: 0,
+    borderRadius: 85,
+    borderTopLeftRadius: 0,
   },
   manuelAddContainer: {
     justifyContent: 'center',
@@ -161,11 +155,27 @@ const styles = StyleSheet.create({
   labelText: {
     fontSize: dynamicFontSize,
     fontWeight: '600',
+    color: 'black',
   },
   manuelAddContent: {
     marginTop: 20,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
+  },
+  bottomBar:{
+    position: 'absolute',
+    bottom: 0,
+    width: '90%',
+    marginLeft:'5%',
+    height: '9%',
+    backgroundColor:'grey',
+    alignItems:'flex-end',
+    justifyContent:'center',
+    borderRadius:20,
+
+  },
+  Settings:{
+    paddingHorizontal:'10%',
   },
 });

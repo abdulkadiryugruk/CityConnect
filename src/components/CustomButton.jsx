@@ -15,14 +15,15 @@ export default CustomButton;
 
 const styles = StyleSheet.create({
   buttonStyle: {
-    backgroundColor: '#2196F3',
+    backgroundColor: '#2cb9b0',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '80%',
+    width: '60%',
     height: 50,
     marginVertical: 25,
-    borderRadius: 15,
+    borderRadius: 50,
     elevation: 10,
+//  borderWidth:0.5,
   },
   buttonTextStyle: {
     color: '#fff',
