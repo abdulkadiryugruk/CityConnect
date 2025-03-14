@@ -14,25 +14,23 @@ CityConnect, kullanıcıların telefon rehberindeki kişi isimlerinde şehir adl
 
 Bu projeyi çalıştırmak için aşağıdaki adımları takip edin:
 
-1. **Gerekli Bağımlılıkları Yükleyin**
-
+1. **Gerekli Bağımlılıkları Yükleyin**  
 ```sh
 npm install
 ```
 
-2. **Uygulamayı Çalıştırın**
-
+2. **Uygulamayı Çalıştırın**  
 ```sh
 npx react-native run-android
 ```
 
 ## 📸 Ekran Görüntüleri
 
-| Ana Ekran                                | Şehir Seçme Ekranı                             | Düzenle Ekranı                        |
-| ---------------------------------------- | ---------------------------------------------- | ------------------------------------- |
-| ![Ana Ekran](docs/assets/HomeScreen.jpg) | ![Şehir Seç](docs/assets/SelectCityScreen.jpg) | [Düzenle](docs/assets/EditScreen.jpg) |
+| Ana Ekran | Ayarlar Ekranı |
+|-----------|---------------|
+| ![Ana Ekran](screenshots/home.png) | ![Ayarlar](screenshots/settings.png) |
 
-## 📝 Lisans
+## 📝 Lisans  
 
 Bu proje **özel bir lisans** altındadır. Kodun veya yazılımın izinsiz kullanımı yasaktır.  
 Tüm hakları saklıdır.
