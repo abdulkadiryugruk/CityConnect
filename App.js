@@ -61,15 +61,13 @@ const App = () => {
 
   return (
     <NavigationContainer ref={navigationRef}>
-      <Stack.Navigator
-        initialRouteName={isFirstLaunch ? 'TutorialScreen' : 'Home'}>
-        {isFirstLaunch && (
-          <Stack.Screen
-            options={{headerShown: false}}
-            name="TutorialScreen"
-            component={TutorialScreen}
-          />
-        )}
+    <Stack.Navigator
+      initialRouteName={isFirstLaunch ? 'TutorialScreen' : 'Home'}>
+      <Stack.Screen
+        options={{headerShown: false}}
+        name="TutorialScreen"
+        component={TutorialScreen}
+      />
         <Stack.Screen
           options={{headerShown: false}}
           name="Home"

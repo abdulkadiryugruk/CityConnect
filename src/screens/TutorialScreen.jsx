@@ -33,20 +33,25 @@ const slides = [
     1- Gerekli izinleri verin.(Ayarlar sekmesinden izinlerin ne için gerekli olduğunu detaylı öğrenebilirsiniz.
 
     2- Rehberininizdeki kişileri şehirlere göre gruplandırınç "Rehberi Tara" butonuna tıklayarak otomatik olarak ekleyin. "Manuel Ekleme" kısmından da istediğiniz gibi değişiklikler yapabilirsiniz.
-
+    `,
+    backgroundColor: '#e9bcbe',
+  },
+  {
+    id: '4',
+    title: 'Bildirimler',
+    description: `
     3- Cihazınızın 'Konum Servisi' açık olduğunda uygulamamız her 15 dakika da 1 bulunduğunuz şehre ekli kişiler varsa size bildirim olarak hatırlatır.
 
     Bildirim gelmediği durumlar:
     - Cihazınızın 'Konum Servisi' kapalı ise.
     - Bildirim izni verilmemiş ise.
     - Şehre kayıtlı kişi yok ise.
-    - uygulamaya arkaplanda çalışma izni verilmemiş ise.
+    - Uygulamaya arkaplanda çalışma izni verilmemiş ise.
     - Şehir değişikliği olmamış ise(aynı şehirde iseniz, bildirim 1 kere gönderilir.).
     `,
-    backgroundColor: '#e9bcbe',
+    backgroundColor: '#b3e5fc',
   },
 ];
-
 const TutorialScreen = ({ navigation }) => {
   const flatListRef = useRef(null);
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -67,10 +72,14 @@ const TutorialScreen = ({ navigation }) => {
     if (currentIndex < slides.length - 1) {
       flatListRef.current.scrollToIndex({ index: currentIndex + 1 });
     } else {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Home' }],
-      });
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Home' }],
+        });
+      }
     }
   };
 
