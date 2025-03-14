@@ -28,7 +28,7 @@ npx react-native run-android
 
 | Ana Ekran | Düzenle Ekranı | Şehir Seç Ekranı |
 |-----------|----------------|------------------|
-| ![Ana Ekran](docs/assets//HomeScreen.jpg) | ![Düzenle](docs/assets//EditScreen.jpg) | ![Şehir Seç](docs/assets//SelectCityScreen.jpg) |
+| ![Ana Ekran](docs/assets//HomeScreen.png) | ![Düzenle](docs/assets//EditScreen.png) | ![Şehir Seç](docs/assets//SelectCityScreen.png) |
 
 ## 📝 Lisans  
 
