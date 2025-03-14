@@ -69,7 +69,7 @@ class NotificationWorker(context: Context, workerParams: WorkerParameters) : Wor
         }
 
         val notificationBuilder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)

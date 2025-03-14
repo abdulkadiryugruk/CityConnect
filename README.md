@@ -38,4 +38,9 @@ Tüm hakları saklıdır.
 ## 📧 İletişim
 
 Herhangi bir sorunuz varsa, bizimle iletişime geçebilirsiniz:  
+<<<<<<< HEAD
 ✉️ **cityconnectdestek@gmail.com**
+=======
+✉️ **cityconnectdestek@gmail.com**
+
+>>>>>>> 9f2dc74ad2a8833bcd55715ece2784958229cebd

@@ -1,0 +1,123 @@
+//TODO TEST ICIN LOCATIONWORKER
+package com.CityConnect
+
+import android.content.Context
+import android.location.Location
+import android.util.Log
+import androidx.work.*
+import kotlinx.coroutines.*
+import org.json.JSONObject
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
+import kotlin.random.Random
+
+class TestLocationWorker(context: Context, workerParams: WorkerParameters) : CoroutineWorker(context, workerParams) {
+
+    companion object {
+        const val WORK_NAME = "test_location_worker"
+        const val TAG = "TestLocationWorker"
+        
+        // Türkiye'nin 5 büyük şehrinin koordinatları ve isimleri
+        private val CITY_COORDINATES = listOf(
+            Triple(41.0082, 28.9784, "İstanbul"),
+            Triple(39.9334, 32.8597, "Ankara"),
+            Triple(38.4237, 27.1428, "İzmir"),
+            Triple(36.8969, 30.7133, "Antalya"),
+            Triple(37.0000, 35.3213, "Adana")
+        )
+    }
+
+    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        try {
+            // Rastgele bir şehir seç
+            val randomCity = CITY_COORDINATES[Random.nextInt(CITY_COORDINATES.size)]
+            
+            // Test location oluştur
+            val testLocation = Location("test").apply {
+                latitude = randomCity.first
+                longitude = randomCity.second
+            }
+
+            Log.d(TAG, "Test konumu seçildi: Lat: ${testLocation.latitude}, Lon: ${testLocation.longitude}, Şehir: ${randomCity.third}")
+            
+            // API'den şehir adını almaya çalış, alamazsa hazır şehir adını kullan
+            val cityName = getCityNameWithFallback(testLocation, randomCity.third)
+            startCityCheckWorker(cityName)
+            
+            return@withContext Result.success(createOutputData(testLocation))
+        } catch (e: Exception) {
+            Log.e(TAG, "TestLocationWorker'da hata oluştu: ${e.message}")
+            return@withContext Result.failure()
+        }
+    }
+
+    private suspend fun getCityNameWithFallback(location: Location, fallbackCityName: String): String {
+        return try {
+            withTimeout(5000) { // 5 saniye timeout
+                getCityName(location.latitude, location.longitude) ?: fallbackCityName
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "API çağrısı başarısız oldu, hazır şehir adı kullanılıyor: $fallbackCityName")
+            fallbackCityName
+        }
+    }
+
+    private suspend fun getCityName(latitude: Double, longitude: Double): String? = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val urlString = "https://photon.komoot.io/reverse?lat=$latitude&lon=$longitude"
+            val url = URL(urlString)
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 5000  // 5 saniye
+            connection.readTimeout = 5000     // 5 saniye
+
+            val inputStream = connection.inputStream
+            val reader = BufferedReader(InputStreamReader(inputStream))
+            val response = reader.use { it.readText() }
+
+            val jsonObject = JSONObject(response)
+            val features = jsonObject.getJSONArray("features")
+
+            if (features.length() > 0) {
+                val properties = features.getJSONObject(0).getJSONObject("properties")
+                properties.optString("state")
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "API hatası: ${e.message}")
+            null
+        }
+    }
+
+    private fun createOutputData(location: Location): Data {
+        return workDataOf(
+            "latitude" to location.latitude,
+            "longitude" to location.longitude
+        )
+    }
+
+    private fun startCityCheckWorker(cityName: String) {
+        val inputData = workDataOf("state" to cityName)
+
+        val constraints = Constraints.Builder()
+            .setRequiresDeviceIdle(false)
+            .setRequiresCharging(false)
+            .build()
+
+        val cityCheckWorkRequest = OneTimeWorkRequestBuilder<CityCheckWorker>()
+            .setInputData(inputData)
+            .setConstraints(constraints)
+            .build()
+
+        WorkManager.getInstance(applicationContext)
+            .enqueueUniqueWork(
+                CityCheckWorker.WORK_NAME,
+                ExistingWorkPolicy.REPLACE,
+                cityCheckWorkRequest
+            )
+    }
+}
+
