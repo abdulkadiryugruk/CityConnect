@@ -26,9 +26,9 @@ npx react-native run-android
 
 ## 📸 Ekran Görüntüleri
 
-| Ana Ekran | Ayarlar Ekranı |
-|-----------|---------------|
-| ![Ana Ekran](docs/assets//HomeScreen.jpg) | ![Ayarlar](docs/assets//EditScreen.jpg) |
+| Ana Ekran | Düzenle Ekranı | Şehir Seç Ekranı |
+|-----------|----------------|------------------|
+| ![Ana Ekran](docs/assets//HomeScreen.jpg) | ![Düzenle](docs/assets//EditScreen.jpg) | ![Şehir Seç](docs/assets//SelectCityScreen.jpg) |
 
 ## 📝 Lisans  
 
