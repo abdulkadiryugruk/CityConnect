@@ -33,7 +33,6 @@ const slides = [
     1- Gerekli izinleri verin.(Ayarlar sekmesinden izinlerin ne için gerekli olduğunu detaylı öğrenebilirsiniz.
 
     2- Rehberininizdeki kişileri şehirlere göre gruplandırınç "Rehberi Tara" butonuna tıklayarak otomatik olarak ekleyin. "Manuel Ekleme" kısmından da istediğiniz gibi değişiklikler yapabilirsiniz.
-<<<<<<< HEAD
     `,
     backgroundColor: '#e9bcbe',
   },
@@ -41,31 +40,18 @@ const slides = [
     id: '4',
     title: 'Bildirimler',
     description: `
-=======
-
->>>>>>> 9f2dc74ad2a8833bcd55715ece2784958229cebd
     3- Cihazınızın 'Konum Servisi' açık olduğunda uygulamamız her 15 dakika da 1 bulunduğunuz şehre ekli kişiler varsa size bildirim olarak hatırlatır.
 
     Bildirim gelmediği durumlar:
     - Cihazınızın 'Konum Servisi' kapalı ise.
     - Bildirim izni verilmemiş ise.
     - Şehre kayıtlı kişi yok ise.
-<<<<<<< HEAD
     - Uygulamaya arkaplanda çalışma izni verilmemiş ise.
     - Şehir değişikliği olmamış ise(aynı şehirde iseniz, bildirim 1 kere gönderilir.).
     `,
     backgroundColor: '#b3e5fc',
   },
 ];
-=======
-    - uygulamaya arkaplanda çalışma izni verilmemiş ise.
-    - Şehir değişikliği olmamış ise(aynı şehirde iseniz, bildirim 1 kere gönderilir.).
-    `,
-    backgroundColor: '#e9bcbe',
-  },
-];
-
->>>>>>> 9f2dc74ad2a8833bcd55715ece2784958229cebd
 const TutorialScreen = ({ navigation }) => {
   const flatListRef = useRef(null);
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -86,7 +72,6 @@ const TutorialScreen = ({ navigation }) => {
     if (currentIndex < slides.length - 1) {
       flatListRef.current.scrollToIndex({ index: currentIndex + 1 });
     } else {
-<<<<<<< HEAD
       if (navigation.canGoBack()) {
         navigation.goBack();
       } else {
@@ -95,12 +80,6 @@ const TutorialScreen = ({ navigation }) => {
           routes: [{ name: 'Home' }],
         });
       }
-=======
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Home' }],
-      });
->>>>>>> 9f2dc74ad2a8833bcd55715ece2784958229cebd
     }
   };
 

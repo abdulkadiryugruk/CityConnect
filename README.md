@@ -28,7 +28,7 @@ npx react-native run-android
 
 | Ana Ekran | Ayarlar Ekranı |
 |-----------|---------------|
-| ![Ana Ekran](screenshots/home.png) | ![Ayarlar](screenshots/settings.png) |
+| ![Ana Ekran](docs/assets//HomeScreen.jpg) | ![Ayarlar](docs/assets//EditScreen.jpg) |
 
 ## 📝 Lisans  
 
@@ -38,9 +38,4 @@ Tüm hakları saklıdır.
 ## 📧 İletişim
 
 Herhangi bir sorunuz varsa, bizimle iletişime geçebilirsiniz:  
-<<<<<<< HEAD
 ✉️ **cityconnectdestek@gmail.com**
-=======
-✉️ **cityconnectdestek@gmail.com**
-
->>>>>>> 9f2dc74ad2a8833bcd55715ece2784958229cebd
